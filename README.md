@@ -76,11 +76,33 @@ make pgadmin                        Start pgAdmin4 at http://localhost:5050
 
 ## Debugging
 
-The environment runs `debugpy` on port `5678`. Open the workspace file in VS Code and use the **Docker: Odoo Debug** launch configuration to attach the debugger.
+The environment runs `debugpy` on port `5678`. To attach the debugger:
+
+**1. Open the project folder in VS Code**
 
 ```bash
-open odoo-dev.code-workspace
+code ~/Odoo/Customers/acme
 ```
+
+**2. Reopen in container**
+
+When prompted by the Dev Containers extension, click **Reopen in Container**.
+If the prompt does not appear, open the Command Palette (`Cmd+Shift+P`) and run:
+`Dev Containers: Reopen in Container`
+
+This connects VS Code to the running Odoo container. All workspace paths
+(`/opt/odoo-src`, `/mnt/reference`, `/mnt/extra-addons`) resolve from inside
+the container — the workspace file will not work without this step.
+
+**3. Open the workspace file**
+
+Once inside the container, open `odoo-dev.code-workspace` to load all folders.
+Then use the **Docker: Odoo Debug** launch configuration to attach the debugger.
+
+> **Running multiple clients simultaneously?**
+> Change `ODOO_PORT` and `ODOO_DEBUG_PORT` in each client's `.env` to avoid
+> port conflicts (e.g. `8069`/`5678` for one, `8070`/`5679` for another).
+> Each VS Code window connects to its own container independently.
 
 ---
 

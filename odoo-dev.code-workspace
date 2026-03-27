@@ -1,4 +1,7 @@
 {
+    // IMPORTANT: This workspace uses paths that exist inside the Docker container.
+    // It will only work after reopening the project with the Dev Containers extension:
+    // "Dev Containers: Reopen in Container" (Cmd+Shift+P)
     "folders": [
         {
             "path": "/opt/odoo-src",

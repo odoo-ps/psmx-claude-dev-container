@@ -5,8 +5,8 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "8069:8069"
-      - "5678:5678"
+      - "${ODOO_PORT:-8069}:8069"
+      - "${ODOO_DEBUG_PORT:-5678}:5678"
     volumes:
       - .:/workspace
       - odoo-web-data:/var/lib/odoo
