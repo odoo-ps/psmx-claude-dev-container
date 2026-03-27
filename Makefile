@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: start stop restart logs shell ps restore upgrade build help
+.PHONY: start stop restart logs shell ps restore upgrade build destroy help
 
 start: ## Levanta el entorno
 	docker compose up -d
@@ -32,6 +32,16 @@ upgrade: ## Upgradea módulos de Odoo. Uso: make upgrade modules=mod1,mod2
 		-d $(ODOO_DB_NAME) \
 		-u $(modules) \
 		--stop-after-init
+
+destroy: ## Elimina contenedores, redes Y volúmenes (borra la base de datos)
+	@echo ""
+	@echo "  \033[33mWARNING\033[0m: This will remove all containers, networks and volumes."
+	@echo "  The database '$(ODOO_DB_NAME)' will be permanently deleted."
+	@echo ""
+	@read -p "  Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ] \
+		&& docker compose down -v \
+		|| echo "Aborted."
+	@echo ""
 
 build: ## Construye la imagen Docker para la versión target. Uso: make build
 	docker build \
