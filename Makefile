@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: start stop restart logs shell ps restore upgrade build destroy help
+.PHONY: start stop restart restart-all logs shell ps restore upgrade build destroy help
 
 start: ## Start the environment
 	docker compose up -d
@@ -9,7 +9,10 @@ start: ## Start the environment
 stop: ## Stop the environment
 	docker compose down
 
-restart: stop start ## Restart the environment
+restart: ## Restart the Odoo server (keeps the database running)
+	docker compose restart web
+
+restart-all: stop start ## Restart the entire stack (Odoo + database)
 
 logs: ## Stream Odoo server logs
 	docker compose logs -f web

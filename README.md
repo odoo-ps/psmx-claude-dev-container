@@ -64,7 +64,8 @@ Odoo will be available at http://localhost:8069
 ```
 make start                          Start the environment
 make stop                           Stop the environment
-make restart                        Restart the environment
+make restart                        Restart the Odoo server (keeps the database running)
+make restart-all                    Restart the entire stack (Odoo + database)
 make logs                           Stream Odoo server logs
 make shell                          Open a shell inside the Odoo container
 make ps                             Show container status
