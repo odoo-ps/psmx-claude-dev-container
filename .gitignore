@@ -1,0 +1,14 @@
+# Environment — never commit real credentials
+.env
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Odoo
+*.log
+filestore/
