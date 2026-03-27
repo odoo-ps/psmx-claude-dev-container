@@ -41,7 +41,9 @@ cp .env.example .env
 
 Edit `.env` with the values for your client (versions, database name, paths).
 
-**3. Build the Docker image**
+**3. Build the Docker image** _(optional)_
+
+Skip this step if the image is already built or pulled from DockerHub.
 
 ```bash
 make build
@@ -70,7 +72,10 @@ make build                          Build the Docker image for the target versio
 make restore dump=file.dump         Restore a database from ~/Odoo/Dumps/
 make upgrade modules=mod1,mod2      Upgrade Odoo modules
 make pgadmin                        Start pgAdmin4 at http://localhost:5050
+make destroy                        Remove all containers, networks and volumes (deletes the database)
 ```
+
+For common day-to-day scenarios, see [common worklflows](WORKFLOWS.md) examples.
 
 ---
 
@@ -113,6 +118,39 @@ To enable hot reload during development, add `--dev=all` to `ODOO_EXTRA_ARGS` in
 ```
 ODOO_EXTRA_ARGS=--dev=all
 ```
+
+---
+
+## pgAdmin4
+
+pgAdmin4 is included as an optional service for database inspection. It is not
+started by default — only when explicitly requested.
+
+```bash
+make pgadmin
+# → http://localhost:5050  (admin@admin.com / admin)
+```
+
+### When to use it during an upgrade
+
+**Comparing schemas between versions**
+- The most valuable use case. Before and after an upgrade, you can inspect
+the real database schema — column types, constraints, indexes — and verify
+that the migration scripts transformed the data correctly.
+
+**Debugging SQL errors**
+- When a migration fails with a PostgreSQL error, pgAdmin lets you run raw
+SQL queries against the database to reproduce and diagnose the problem
+without restarting the full upgrade process.
+
+**Analyzing performance issues**
+- If Odoo is slow after an upgrade, use the query analysis tools to identify
+missing indexes or inefficient queries introduced by the new version.
+
+**Inspecting data after a restore**
+- After `make restore`, pgAdmin is useful to quickly verify that the dump was
+restored correctly — row counts, field values, related records — before
+starting the upgrade iteration.
 
 ---
 
