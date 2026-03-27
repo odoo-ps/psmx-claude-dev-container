@@ -8,10 +8,12 @@ Dockerized development environment for Odoo. Designed for custom module developm
 
 - Docker Desktop
 - Git
-- The following directory structure on your machine:
+- SSH access to GitHub configured
+- The following directory structure on your machine (created automatically by `setup.sh`):
 
 ```
 ~/Odoo/
+├── .vault/             ← Bare git repos (shared object store)
 ├── Worktrees/          ← Odoo source code (git worktrees)
 │   ├── 16.0/
 │   ├── 17.0/
@@ -19,8 +21,24 @@ Dockerized development environment for Odoo. Designed for custom module developm
 │   └── 19.0/
 ├── Repos/              ← Customer module repositories
 ├── Dumps/              ← Database dumps (.sql / .dump)
-└── Upgrade/            ← odoo-upgrade-util
+└── Upgrade/            ← upgrade and upgrade-util
 ```
+
+---
+
+## First-time machine setup
+
+If this is a new machine, run `setup.sh` before anything else. It creates
+the directory structure, clones Odoo source repos as bare repositories,
+creates worktrees for the versions you choose, and installs upgrade tools.
+
+```bash
+git clone git@github.com:eagf-odoo/odoo-dev-template.git ~/Odoo/Customers/template
+cd ~/Odoo/Customers/template
+bash setup.sh
+```
+
+The script is interactive and safe to re-run — it skips anything that already exists.
 
 ---
 
