@@ -105,6 +105,11 @@ the container — the workspace file will not work without this step.
 Once inside the container, open `odoo-dev.code-workspace` to load all folders.
 Then use the **Docker: Odoo Debug** launch configuration to attach the debugger.
 
+> **Debugger not working? `Cannot activate 'Python Debugger'` error?**
+> Open the Command Palette (`Cmd+Shift+P`) and run `Developer: Reload Window`.
+> This reinitializes the extension host and resolves the activation order issue
+> between the Python and Debugpy extensions.
+
 > **Running multiple clients simultaneously?**
 > Change `ODOO_PORT` and `ODOO_DEBUG_PORT` in each client's `.env` to avoid
 > port conflicts (e.g. `8069`/`5678` for one, `8070`/`5679` for another).
