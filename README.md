@@ -47,6 +47,34 @@ The script is interactive and safe to re-run — it skips anything that already 
 
 ---
 
+## Managing worktrees
+
+Use `worktree.sh` to add or remove Odoo source worktrees after the initial setup.
+This is the recommended way to add new versions — including `saas-*` branches —
+without re-running the full `setup.sh`.
+
+**Interactive mode**
+
+```bash
+bash worktree.sh
+```
+
+Presents a menu to add or remove a worktree.
+
+**Non-interactive mode**
+
+```bash
+bash worktree.sh add 18.0
+bash worktree.sh add saas-18.4
+bash worktree.sh remove 17.0
+```
+
+The script fetches the latest refs from the vault before creating a worktree, copies
+the appropriate Dockerfile (`legacy` for < 18.0, `modern` for ≥ 18.0 and all `saas-*`),
+and registers the worktree removal cleanly with git when deleting.
+
+---
+
 ## Setup
 
 **1. Clone this template for your client**

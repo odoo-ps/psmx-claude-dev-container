@@ -41,7 +41,7 @@ UPGRADE_UTIL_REPO="git@github.com:odoo/upgrade-util.git"
 
 # --- Versions ----------------------------------------------------------------
 LEGACY_VERSIONS=("16.0" "17.0")
-MODERN_VERSIONS=("18.0" "19.0" "saas-18.2" "saas-18.3" "saas-18.4")
+MODERN_VERSIONS=("18.0" "19.0")
 ALL_VERSIONS=("${LEGACY_VERSIONS[@]}" "${MODERN_VERSIONS[@]}")
 
 # --- Helpers -----------------------------------------------------------------
