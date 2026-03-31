@@ -47,12 +47,13 @@ print_header() {
 
 is_legacy() {
     local version="$1"
-    # saas branches are always modern
-    if [[ "$version" == saas-* ]]; then
-        return 1
-    fi
     local major
-    major=$(echo "$version" | cut -d'.' -f1)
+    if [[ "$version" == saas-* ]]; then
+        # Extract major from saas-X.Y → X
+        major=$(echo "$version" | sed 's/saas-\([0-9]*\)\..*/\1/')
+    else
+        major=$(echo "$version" | cut -d'.' -f1)
+    fi
     [[ "$major" -lt 18 ]]
 }
 

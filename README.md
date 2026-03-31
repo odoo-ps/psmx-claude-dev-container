@@ -70,8 +70,10 @@ bash worktree.sh remove 17.0
 ```
 
 The script fetches the latest refs from the vault before creating a worktree, copies
-the appropriate Dockerfile (`legacy` for < 18.0, `modern` for ≥ 18.0 and all `saas-*`),
-and registers the worktree removal cleanly with git when deleting.
+the appropriate Dockerfile based on the major version number (`legacy` / Python 3.10
+for < 18.0, including `saas-16.*` and `saas-17.*`; `modern` / Python 3.12 for ≥ 18.0
+and `saas-18.*` and above), and registers the worktree removal cleanly with git when
+deleting.
 
 ---
 
