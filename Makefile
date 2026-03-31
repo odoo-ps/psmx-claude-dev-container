@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: start stop restart restart-all logs shell ps restore upgrade build destroy fetch-all check-worktrees help
+.PHONY: start stop restart restart-all logs shell ps restore upgrade test test-tags test-file build destroy fetch-all check-worktrees help
 
 check-worktrees: ## Validate that target and source worktrees exist before starting
 	@if [ ! -d "$(ODOO_WORKTREE_PATH)/$(ODOO_TARGET_VERSION)" ]; then \
@@ -50,6 +50,28 @@ upgrade: ## Upgrade Odoo modules. Usage: make upgrade modules=mod1,mod2
 		-c /etc/odoo/odoo.conf \
 		-d $(ODOO_DB_NAME) \
 		-u $(modules) \
+		--stop-after-init
+
+test: ## Run tests for modules. Usage: make test modules=sale,account
+	docker compose exec web python /opt/odoo-src/odoo/odoo-bin \
+		-c /etc/odoo/odoo.conf \
+		-d $(ODOO_DB_NAME) \
+		-u $(modules) \
+		--test-enable \
+		--stop-after-init
+
+test-tags: ## Run tests by tag. Usage: make test-tags tags=/module:Class.method
+	docker compose exec web python /opt/odoo-src/odoo/odoo-bin \
+		-c /etc/odoo/odoo.conf \
+		-d $(ODOO_DB_NAME) \
+		--test-tags $(tags) \
+		--stop-after-init
+
+test-file: ## Run tests from a file. Usage: make test-file file=/mnt/extra-addons/module/tests/test_x.py
+	docker compose exec web python /opt/odoo-src/odoo/odoo-bin \
+		-c /etc/odoo/odoo.conf \
+		-d $(ODOO_DB_NAME) \
+		--test-file $(file) \
 		--stop-after-init
 
 destroy: ## Remove all containers, networks and volumes (deletes the database)
