@@ -24,6 +24,11 @@ Dockerized development environment for Odoo. Designed for custom module developm
 └── Upgrade/            ← upgrade and upgrade-util
 ```
 
+> **Important:** The `.vault/` directory must always be located at `~/Odoo/.vault`.
+> This path is mounted into the container at its exact host location so that git worktree
+> pointers resolve correctly inside the container — required for GitLens to show
+> blame and history on Odoo source files.
+
 ---
 
 ## First-time machine setup
@@ -58,6 +63,11 @@ cp .env.example .env
 ```
 
 Edit `.env` with the values for your client (versions, database name, paths).
+
+> **`ODOO_VAULT_PATH` must be an absolute path.** Use `$HOME/Odoo/.vault` or the
+> equivalent — do not use `~`. Docker Compose expands tilde in the source (host)
+> path but not in the target (container) path, so `source` and `target` would
+> diverge and git worktree pointers would not resolve.
 
 **3. Build the Docker image** _(optional)_
 

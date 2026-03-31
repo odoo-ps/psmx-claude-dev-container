@@ -24,6 +24,9 @@ services:
       - ${CUSTOMER_REPO}:/mnt/extra-addons
       # Upgrade path -> <local_path>:<path_inside_container>
       - ${ODOO_UPGRADE_PATH}:/mnt/upgrade:ro
+      # Bare git repos — mounted at the same host path so git worktree
+      # pointers resolve inside the container (required for GitLens)
+      - ${ODOO_VAULT_PATH}:${ODOO_VAULT_PATH}:ro
     environment:
       - HOST=db
       - USER=odoo
