@@ -1,0 +1,184 @@
+# Reference
+
+Complete reference for all commands and features of the Odoo Dev Environment Template.
+
+For practical step-by-step scenarios (upgrade loop, two clients simultaneously, etc.)
+see [WORKFLOWS.md](WORKFLOWS.md).
+
+---
+
+## Available commands
+
+```
+make start                               Start the environment (validates worktrees first)
+make stop                                Stop the environment
+make restart                             Restart the Odoo server (keeps the database running)
+make restart-all                         Restart the entire stack (Odoo + database)
+make logs                                Stream Odoo server logs
+make shell                               Open a shell inside the Odoo container
+make ps                                  Show container status
+make build                               Build the Docker image for the target version
+make restore dump=file.dump              Restore a database from ~/Odoo/Dumps/
+make upgrade modules=mod1,mod2           Upgrade Odoo modules
+make test modules=mod1,mod2             Upgrade modules and run their tests
+make test-tags tags=/mod:Class.method    Run tests matching a tag, class or method
+make test-file file=/path/to/test.py     Run tests from a specific file
+make pgadmin                             Start pgAdmin4 at http://localhost:5050
+make fetch-all                           Fetch latest refs for all vault repos
+make destroy                             Remove all containers, networks and volumes (deletes the database)
+```
+
+---
+
+## Managing worktrees
+
+Use `worktree.sh` to add or remove Odoo source worktrees after the initial setup.
+This is the recommended way to add new versions — including `saas-*` branches —
+without re-running the full `setup.sh`.
+
+**Interactive mode**
+
+```bash
+bash worktree.sh
+```
+
+Presents a menu to add or remove a worktree.
+
+**Non-interactive mode**
+
+```bash
+bash worktree.sh add 18.0
+bash worktree.sh add saas-18.4
+bash worktree.sh remove 17.0
+```
+
+The script fetches the latest refs from the vault before creating a worktree, copies
+the appropriate Dockerfile based on the major version number (`legacy` / Python 3.10
+for < 18.0, including `saas-16.*` and `saas-17.*`; `modern` / Python 3.12 for ≥ 18.0
+and `saas-18.*` and above), and registers the worktree removal cleanly with git when
+deleting.
+
+> **Important:** The `.vault/` directory must always be located at `~/Odoo/.vault`.
+> This path is mounted into the container at its exact host location so that git worktree
+> pointers resolve correctly inside the container — required for GitLens to show
+> blame and history on Odoo source files.
+
+---
+
+## Debugging
+
+The environment runs `debugpy` on port `5678`. To attach the debugger:
+
+**1. Open the project folder in VS Code**
+
+```bash
+code ~/Odoo/Customers/acme
+```
+
+**2. Reopen in container**
+
+When prompted by the Dev Containers extension, click **Reopen in Container**.
+If the prompt does not appear, open the Command Palette (`Cmd+Shift+P`) and run:
+`Dev Containers: Reopen in Container`
+
+This connects VS Code to the running Odoo container. All workspace paths
+(`/opt/odoo-src`, `/mnt/reference`, `/mnt/extra-addons`) resolve from inside
+the container — the workspace file will not work without this step.
+
+**3. Open the workspace file**
+
+Once inside the container, open `odoo-dev.code-workspace` to load all folders.
+Then use the **Docker: Odoo Debug** launch configuration to attach the debugger.
+
+> **Debugger not working? `Cannot activate 'Python Debugger'` error?**
+> Open the Command Palette (`Cmd+Shift+P`) and run `Developer: Reload Window`.
+> This reinitializes the extension host and resolves the activation order issue
+> between the Python and Debugpy extensions.
+
+> **Running multiple clients simultaneously?**
+> Change `ODOO_PORT` and `ODOO_DEBUG_PORT` in each client's `.env` to avoid
+> port conflicts (e.g. `8069`/`5678` for one, `8070`/`5679` for another).
+> Each VS Code window connects to its own container independently.
+
+---
+
+## Hot reload
+
+To enable hot reload during development, add `--dev=all` to `ODOO_EXTRA_ARGS` in your `.env`:
+
+```
+ODOO_EXTRA_ARGS=--dev=all
+```
+
+---
+
+## Testing
+
+Three commands are available depending on the level of granularity needed:
+
+| Command | Flag | When to use |
+|---|---|---|
+| `make test` | `--test-enable` | Upgrade a module and run all its tests |
+| `make test-tags` | `--test-tags` (self-enabling) | Target a specific tag, class or method |
+| `make test-file` | `--test-file` | Run all tests in a specific Python file |
+
+**Examples**
+
+```bash
+# Upgrade and run all tests for a module
+make test modules=acme_sale
+
+# Run a specific test class
+make test-tags tags=/acme_sale:TestSaleOrder
+
+# Run a single test method
+make test-tags tags=/acme_sale:TestSaleOrder.test_create
+
+# Run all tests in a file
+make test-file file=/mnt/extra-addons/acme_sale/tests/test_sale_order.py
+```
+
+> `--test-file` is available from Odoo 15 onwards.
+
+---
+
+## pgAdmin4
+
+pgAdmin4 is included as an optional service for database inspection. It is not
+started by default — only when explicitly requested.
+
+```bash
+make pgadmin
+# → http://localhost:5050  (admin@admin.com / admin)
+```
+
+### When to use it during an upgrade
+
+**Comparing schemas between versions**
+- Before and after an upgrade, inspect the real database schema — column types,
+  constraints, indexes — and verify that the migration scripts transformed the
+  data correctly.
+
+**Debugging SQL errors**
+- When a migration fails with a PostgreSQL error, pgAdmin lets you run raw SQL
+  queries against the database to reproduce and diagnose the problem without
+  restarting the full upgrade process.
+
+**Analyzing performance issues**
+- If Odoo is slow after an upgrade, use the query analysis tools to identify
+  missing indexes or inefficient queries introduced by the new version.
+
+**Inspecting data after a restore**
+- After `make restore`, quickly verify that the dump was restored correctly —
+  row counts, field values, related records — before starting the upgrade iteration.
+
+---
+
+## Upgrade workflow
+
+The environment mounts two versions of Odoo simultaneously:
+
+- **Target** (`/opt/odoo-src`) — the version you are upgrading to
+- **Source** (`/mnt/reference`) — the version you are upgrading from, read-only
+
+Both are visible in the VS Code workspace for side-by-side comparison without switching branches.
