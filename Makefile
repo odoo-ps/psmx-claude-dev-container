@@ -1,9 +1,25 @@
 include .env
 export
 
-.PHONY: start stop restart restart-all logs shell ps restore upgrade build destroy help
+.PHONY: start stop restart restart-all logs shell ps restore upgrade build destroy fetch-all check-worktrees help
 
-start: ## Start the environment
+check-worktrees: ## Validate that target and source worktrees exist before starting
+	@if [ ! -d "$(ODOO_WORKTREE_PATH)/$(ODOO_TARGET_VERSION)" ]; then \
+		echo ""; \
+		echo "  \033[31mError: worktree not found for ODOO_TARGET_VERSION=$(ODOO_TARGET_VERSION)\033[0m"; \
+		echo "  Run: bash worktree.sh add $(ODOO_TARGET_VERSION)"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@if [ ! -d "$(ODOO_WORKTREE_PATH)/$(ODOO_SOURCE_VERSION)" ]; then \
+		echo ""; \
+		echo "  \033[31mError: worktree not found for ODOO_SOURCE_VERSION=$(ODOO_SOURCE_VERSION)\033[0m"; \
+		echo "  Run: bash worktree.sh add $(ODOO_SOURCE_VERSION)"; \
+		echo ""; \
+		exit 1; \
+	fi
+
+start: check-worktrees ## Start the environment
 	docker compose up -d
 
 stop: ## Stop the environment
@@ -44,6 +60,14 @@ destroy: ## Remove all containers, networks and volumes (deletes the database)
 	@read -p "  Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ] \
 		&& docker compose down -v \
 		|| echo "Aborted."
+	@echo ""
+
+fetch-all: ## Fetch latest refs for all vault repos (odoo, enterprise, design-themes)
+	@echo ""
+	@for repo in odoo enterprise design-themes; do \
+		echo "  Fetching $$repo..."; \
+		git -C $(ODOO_VAULT_PATH)/$$repo.git fetch --prune origin; \
+	done
 	@echo ""
 
 build: ## Build the Docker image for the target version. Usage: make build

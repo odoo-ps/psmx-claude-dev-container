@@ -120,7 +120,7 @@ Odoo will be available at http://localhost:8069
 ## Available commands
 
 ```
-make start                          Start the environment
+make start                          Start the environment (validates worktrees first)
 make stop                           Stop the environment
 make restart                        Restart the Odoo server (keeps the database running)
 make restart-all                    Restart the entire stack (Odoo + database)
@@ -131,8 +131,13 @@ make build                          Build the Docker image for the target versio
 make restore dump=file.dump         Restore a database from ~/Odoo/Dumps/
 make upgrade modules=mod1,mod2      Upgrade Odoo modules
 make pgadmin                        Start pgAdmin4 at http://localhost:5050
+make fetch-all                      Fetch latest refs for all vault repos
 make destroy                        Remove all containers, networks and volumes (deletes the database)
 ```
+
+> `make start` automatically validates that the worktrees for `ODOO_TARGET_VERSION`
+> and `ODOO_SOURCE_VERSION` exist before starting. If either is missing, it prints
+> the exact `worktree.sh` command needed to create it.
 
 For common day-to-day scenarios, see [common worklflows](WORKFLOWS.md) examples.
 
