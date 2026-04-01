@@ -1,17 +1,19 @@
 include .env
 export
 
-.PHONY: start stop restart restart-all logs shell ps restore upgrade test test-tags test-file build destroy fetch-all check-worktrees help
+.PHONY: start stop restart restart-all logs shell ps restore upgrade test test-tags test-file build destroy fetch-all check-worktrees list-worktrees help
 
-check-worktrees: ## Validate that target and source worktrees exist before starting
-	@if [ ! -d "$(ODOO_WORKTREE_PATH)/$(ODOO_TARGET_VERSION)" ]; then \
+check-worktrees:
+	@_target=$$(eval echo "$(ODOO_WORKTREE_PATH)/$(ODOO_TARGET_VERSION)"); \
+	if [ ! -d "$$_target" ]; then \
 		echo ""; \
 		echo "  \033[31mError: worktree not found for ODOO_TARGET_VERSION=$(ODOO_TARGET_VERSION)\033[0m"; \
 		echo "  Run: bash worktree.sh add $(ODOO_TARGET_VERSION)"; \
 		echo ""; \
 		exit 1; \
 	fi
-	@if [ ! -d "$(ODOO_WORKTREE_PATH)/$(ODOO_SOURCE_VERSION)" ]; then \
+	@_source=$$(eval echo "$(ODOO_WORKTREE_PATH)/$(ODOO_SOURCE_VERSION)"); \
+	if [ ! -d "$$_source" ]; then \
 		echo ""; \
 		echo "  \033[31mError: worktree not found for ODOO_SOURCE_VERSION=$(ODOO_SOURCE_VERSION)\033[0m"; \
 		echo "  Run: bash worktree.sh add $(ODOO_SOURCE_VERSION)"; \
@@ -97,12 +99,33 @@ build: ## Build the Docker image for the target version. Usage: make build
 		-t odoo-dev:$(ODOO_TARGET_VERSION) \
 		$(ODOO_WORKTREE_PATH)/$(ODOO_TARGET_VERSION)
 
+list-worktrees: ## List all available worktrees
+	@_path=$$(eval echo "$(ODOO_WORKTREE_PATH)"); \
+	echo ""; \
+	echo "  Available worktrees in $$_path:"; \
+	echo ""; \
+	if [ ! -d "$$_path" ]; then \
+		echo "  \033[31mDirectory not found: $$_path\033[0m"; \
+	else \
+		for dir in "$$_path"/*/; do \
+			version=$$(basename "$$dir"); \
+			if [ "$$version" = "$(ODOO_TARGET_VERSION)" ]; then \
+				echo "  \033[32m● $$version\033[0m  (target)"; \
+			elif [ "$$version" = "$(ODOO_SOURCE_VERSION)" ]; then \
+				echo "  \033[36m● $$version\033[0m  (source)"; \
+			else \
+				echo "  \033[90m○ $$version\033[0m"; \
+			fi; \
+		done; \
+	fi
+	@echo ""
+
 help: ## Show this help message
 	@echo ""
 	@echo "Usage: make <command> [options]"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' Makefile \
-		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
+		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Examples:"
 	@echo "  make restore dump=client_prod.dump"

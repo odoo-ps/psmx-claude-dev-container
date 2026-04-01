@@ -20,9 +20,9 @@ clones Odoo source repos as bare repositories, creates worktrees for the version
 you choose, and installs upgrade tools.
 
 ```bash
-git clone git@github.com:eagf-odoo/odoo-dev-template.git ~/Odoo/Customers/template
-cd ~/Odoo/Customers/template
-bash setup.sh
+git clone git@github.com:eagf-odoo/odoo-dev-template.git template
+cd template
+setup.sh
 ```
 
 The script is interactive and safe to re-run — it skips anything that already exists.
@@ -51,17 +51,10 @@ Edit `.env` with the values for your client (versions, database name, paths).
 > path but not in the target (container) path, so `source` and `target` would
 > diverge and git worktree pointers would not resolve.
 
-**3. Get the Docker image**
+**3. Build the Docker image**
 
-Build locally:
 ```bash
 make build
-```
-
-Or pull from DockerHub:
-```bash
-docker pull your-org/odoo-dev:18.0
-docker tag your-org/odoo-dev:18.0 odoo-dev:18.0
 ```
 
 **4. Start the environment**
@@ -70,7 +63,7 @@ docker tag your-org/odoo-dev:18.0 odoo-dev:18.0
 make start
 ```
 
-Odoo will be available at http://localhost:8069
+Odoo will be available at <https://localhost:8069>
 
 ---
 

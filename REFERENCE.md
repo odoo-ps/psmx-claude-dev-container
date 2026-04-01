@@ -20,7 +20,7 @@ make ps                                  Show container status
 make build                               Build the Docker image for the target version
 make restore dump=file.dump              Restore a database from ~/Odoo/Dumps/
 make upgrade modules=mod1,mod2           Upgrade Odoo modules
-make test modules=mod1,mod2             Upgrade modules and run their tests
+make test modules=mod1,mod2              Upgrade modules and run their tests
 make test-tags tags=/mod:Class.method    Run tests matching a tag, class or method
 make test-file file=/path/to/test.py     Run tests from a specific file
 make pgadmin                             Start pgAdmin4 at http://localhost:5050
