@@ -253,10 +253,9 @@ setup_docker_images() {
     echo -e "  How do you want to get the Docker images?"
     echo ""
     echo -e "    ${BOLD}1)${NC} Build locally from Dockerfile"
-    echo -e "    ${BOLD}2)${NC} Pull from DockerHub"
-    echo -e "    ${BOLD}3)${NC} Skip — I'll handle this later"
+    echo -e "    ${BOLD}2)${NC} Skip — I'll handle this later"
     echo ""
-    read -rp "  Choice [1/2/3]: " image_choice
+    read -rp "  Choice [1/2]: " image_choice
     echo ""
 
     case "$image_choice" in
@@ -268,17 +267,6 @@ setup_docker_images() {
                     "$WORKTREES_DIR/$version" \
                     && print_ok "odoo-dev:$version" \
                     || print_error "Build failed for $version — run 'make build' manually"
-            done
-            ;;
-        2)
-            read -rp "  DockerHub username or organization: " dockerhub_user
-            echo ""
-            for version in "${SELECTED_VERSIONS[@]}"; do
-                echo -e "  Pulling ${BOLD}${dockerhub_user}/odoo-dev:$version${NC}..."
-                docker pull "${dockerhub_user}/odoo-dev:$version" \
-                    && docker tag "${dockerhub_user}/odoo-dev:$version" "odoo-dev:$version" \
-                    && print_ok "odoo-dev:$version" \
-                    || print_error "Pull failed for $version — build it manually with 'make build'"
             done
             ;;
         *)

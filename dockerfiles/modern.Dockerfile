@@ -32,6 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Wkhtmltopdf (multi-arch: arm64 + amd64)
+ARG TARGETARCH
 RUN wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bookworm_${TARGETARCH}.deb \
     && apt-get update \
     && apt-get install -y ./wkhtmltox_0.12.6.1-3.bookworm_${TARGETARCH}.deb \
