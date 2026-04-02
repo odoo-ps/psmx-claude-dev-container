@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: start stop restart restart-all logs shell ps restore upgrade test test-tags test-file build destroy fetch-all check-worktrees list-worktrees help
+.PHONY: start stop restart restart-all logs shell ps init restore upgrade test test-tags test-file build destroy fetch-all check-worktrees list-worktrees help
 
 check-worktrees:
 	@_target=$$(eval echo "$(ODOO_WORKTREE_PATH)/$(ODOO_TARGET_VERSION)"); \
@@ -49,6 +49,26 @@ ps: ## Show container status
 
 pgadmin: ## Start pgAdmin4 at http://localhost:5050
 	docker compose --profile pgadmin up -d
+
+init: check-worktrees ## Initialize a fresh database with the base module
+	@echo ""
+	@docker compose stop web > /dev/null 2>&1; true
+	@echo "  Starting database service..."
+	@docker compose up -d --wait db
+	@echo "  Dropping existing database ($(ODOO_DB_NAME))..."
+	@docker compose exec db dropdb -U odoo --if-exists $(ODOO_DB_NAME) > /dev/null 2>&1
+	@echo "  Creating fresh database ($(ODOO_DB_NAME))..."
+	@docker compose exec db createdb -U odoo $(ODOO_DB_NAME) > /dev/null 2>&1
+	@echo "  Installing base module (this may take a while)..."
+	@docker compose run --rm --no-deps web \
+		python3 /opt/odoo-src/odoo/odoo-bin \
+		--config /etc/odoo/odoo.conf \
+		-d $(ODOO_DB_NAME) \
+		-i base \
+		--stop-after-init
+	@echo ""
+	@echo "  \033[32m✓ Database initialized. Run 'make start' to launch Odoo.\033[0m"
+	@echo ""
 
 restore: ## Restore a database. Usage: make restore dump=file.dump
 	./restore.sh dumps/$(dump)
