@@ -23,9 +23,15 @@ check-worktrees:
 
 start: check-worktrees ## Start the environment
 	docker compose up -d
+	@echo ""
+	@echo "  Waiting for Odoo to be ready..."
+	@docker compose logs -f web 2>/dev/null | grep --line-buffered -m 1 "odoo.registry: Registry loaded in" > /dev/null \
+		&& echo "  \033[32m✓ Odoo is ready → http://localhost:$${ODOO_PORT:-8069}\033[0m" \
+		|| true
+	@echo ""
 
 stop: ## Stop the environment
-	docker compose down
+	docker compose --profile pgadmin down
 
 restart: ## Restart the Odoo server (keeps the database running)
 	docker compose restart web
