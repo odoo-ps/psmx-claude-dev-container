@@ -10,20 +10,22 @@ see [WORKFLOWS.md](WORKFLOWS.md).
 ## Available commands
 
 ```
-make start                               Start the environment (validates worktrees first)
-make stop                                Stop the environment
+make start                               Start the environment and wait until Odoo is ready
+make stop                                Stop the environment (including pgAdmin if running)
 make restart                             Restart the Odoo server (keeps the database running)
 make restart-all                         Restart the entire stack (Odoo + database)
 make logs                                Stream Odoo server logs
 make shell                               Open a shell inside the Odoo container
 make ps                                  Show container status
 make build                               Build the Docker image for the target version
+make init                                Initialize a fresh database with the base module
 make restore dump=file.dump              Restore a database from ~/Odoo/Dumps/
 make upgrade modules=mod1,mod2           Upgrade Odoo modules
 make test modules=mod1,mod2              Upgrade modules and run their tests
 make test-tags tags=/mod:Class.method    Run tests matching a tag, class or method
 make test-file file=/path/to/test.py     Run tests from a specific file
 make pgadmin                             Start pgAdmin4 at http://localhost:5050
+make list-worktrees                      List available worktrees (active ones highlighted)
 make fetch-all                           Fetch latest refs for all vault repos
 make destroy                             Remove all containers, networks and volumes (deletes the database)
 ```
@@ -174,11 +176,27 @@ make pgadmin
 
 ---
 
-## Upgrade workflow
+## Operating mode
 
-The environment mounts two versions of Odoo simultaneously:
+This branch is configured for **upgrade** work — migrating custom modules between
+Odoo versions. Two versions are mounted simultaneously:
 
-- **Target** (`/opt/odoo-src`) — the version you are upgrading to
-- **Source** (`/mnt/reference`) — the version you are upgrading from, read-only
+- **Target** (`/opt/odoo-src`) — the version being upgraded to (runs Odoo)
+- **Source** (`/mnt/reference`) — the version being upgraded from, read-only
 
-Both are visible in the VS Code workspace for side-by-side comparison without switching branches.
+Both are visible in the VS Code workspace for side-by-side comparison without
+switching branches.
+
+For maintenance and bugfix work on custom modules (single version, no upgrade
+tooling), use the `maintenance` branch.
+
+## Database initialization
+
+Use `make init` to create a fresh database. This drops any existing database,
+creates a new one, and installs the `base` module with `--stop-after-init`.
+Run `make start` afterwards to launch Odoo normally.
+
+Use `make restore dump=file.dump` to restore from an existing dump instead.
+Do not put `-i base` in `ODOO_EXTRA_ARGS` — it would reinstall the base module
+on every startup. `ODOO_EXTRA_ARGS` is reserved for arguments that apply on
+every run (e.g. `--dev=all`).

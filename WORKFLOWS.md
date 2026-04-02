@@ -23,11 +23,15 @@ cp .env.example .env
 # 5. Place the database dump
 cp ~/Downloads/acme_prod.dump ~/Odoo/Dumps/
 
-# 6. Start the environment
-make start
-
-# 7. Restore the database
+# 6. Restore the database
 make restore dump=acme_prod.dump
+
+# Or initialize a fresh database instead:
+# make init
+
+# 7. Start the environment
+make start
+# → waits until Odoo is ready, then prints the URL
 
 # 8. Open VS Code, reopen in container, then open the workspace
 code .
@@ -158,6 +162,9 @@ make start
 |---|---|
 | Single client | Default ports (`8069`, `5678`) |
 | Two clients | Different `ODOO_PORT` and `ODOO_DEBUG_PORT` per client |
-| Upgrade workflow | `ODOO_SOURCE_VERSION` + `ODOO_TARGET_VERSION` |
+| Upgrade workflow | `ODOO_SOURCE_VERSION` + `ODOO_TARGET_VERSION` (this branch) |
+| Maintenance / bugfix | `ODOO_VERSION` (`maintenance` branch) |
 | Hot reload | `ODOO_EXTRA_ARGS=--dev=all` |
 | No debugger overhead | `ODOO_DEBUG=false` |
+| Fresh database | `make init` then `make start` |
+| Restore from dump | `make restore dump=file.dump` then `make start` |
