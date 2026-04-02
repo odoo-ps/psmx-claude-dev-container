@@ -10,22 +10,20 @@ services:
     volumes:
       - .:/workspace
       - odoo-web-data:/var/lib/odoo
-      # Configuration file if necessary
       - ./config:/etc/odoo
-      # Source code -> <local_path>:<path_inside_container>
+      # Odoo target version (read-only)
       - ${ODOO_WORKTREE_PATH}/${ODOO_TARGET_VERSION}/odoo:/opt/odoo-src/odoo:ro
       - ${ODOO_WORKTREE_PATH}/${ODOO_TARGET_VERSION}/enterprise:/opt/odoo-src/enterprise:ro
       - ${ODOO_WORKTREE_PATH}/${ODOO_TARGET_VERSION}/design-themes:/opt/odoo-src/design-themes:ro
-      # Reference source code -> <local_path>:<path_inside_container>
+      # Odoo source version for reference (read-only)
       - ${ODOO_WORKTREE_PATH}/${ODOO_SOURCE_VERSION}/odoo:/mnt/reference/odoo:ro
       - ${ODOO_WORKTREE_PATH}/${ODOO_SOURCE_VERSION}/enterprise:/mnt/reference/enterprise:ro
       - ${ODOO_WORKTREE_PATH}/${ODOO_SOURCE_VERSION}/design-themes:/mnt/reference/design-themes:ro
-      # Custom modules -> <local_path>:<path_inside_container>
+      # Custom modules
       - ${CUSTOMER_REPO}:/mnt/extra-addons
-      # Upgrade path -> <local_path>:<path_inside_container>
+      # Upgrade utilities (used for migration scripts)
       - ${ODOO_UPGRADE_PATH}:/mnt/upgrade:ro
-      # Bare git repos — mounted at the same host path so git worktree
-      # pointers resolve inside the container (required for GitLens)
+      # Vault mounted at the same host path so git worktree symlinks resolve inside the container (required for GitLens)
       - ${ODOO_VAULT_PATH}:${ODOO_VAULT_PATH}:ro
     environment:
       - HOST=db
@@ -67,12 +65,7 @@ services:
       timeout: 3s
       retries: 5
 
-  # pgAdmin4 — useful for:
-  #   - Deeper understanding of database structure
-  #   - Inspect real schema between versions
-  #   - Debug SQL queries with graphic tools
-  #   - Analyze performance issues and deadlocks
-  # Usage: docker compose --profile pgadmin up -d
+  # Optional service — enable with: docker compose --profile pgadmin up -d
   pgadmin:
     image: dpage/pgadmin4
     profiles:

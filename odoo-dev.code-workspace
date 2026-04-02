@@ -9,7 +9,7 @@
         },
         {
             "path": "/mnt/reference",
-            "name": "2. Odoo source version (For reference only)"
+            "name": "2. Odoo source version"
         },
         {
             "path": "/mnt/upgrade",
@@ -26,7 +26,8 @@
             "/opt/odoo-src/enterprise",
             "/opt/odoo-src/design-themes",
             "/mnt/extra-addons",
-            "/mnt/upgrade"
+            "/mnt/upgrade/upgrade-util/src",
+            "/mnt/upgrade/upgrade/migrations",
         ],
         "files.exclude": {
             "**/*.pyc": true,
