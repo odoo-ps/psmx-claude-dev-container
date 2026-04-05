@@ -17,7 +17,7 @@ make restart-all                         Restart the entire stack (Odoo + databa
 make logs                                Stream Odoo server logs
 make shell                               Open a shell inside the Odoo container
 make ps                                  Show container status
-make build                               Build the Docker image for the target version
+make build                               Build the Docker image for ODOO_VERSION
 make init                                Initialize a fresh database with the base module
 make restore dump=file.dump              Restore a database from ~/Odoo/Dumps/
 make upgrade modules=mod1,mod2           Upgrade Odoo modules
@@ -25,7 +25,7 @@ make test modules=mod1,mod2              Upgrade modules and run their tests
 make test-tags tags=/mod:Class.method    Run tests matching a tag, class or method
 make test-file file=/path/to/test.py     Run tests from a specific file
 make pgadmin                             Start pgAdmin4 at http://localhost:5050
-make list-worktrees                      List available worktrees (active ones highlighted)
+make list-worktrees                      List available worktrees (active one highlighted)
 make fetch-all                           Fetch latest refs for all vault repos
 make destroy                             Remove all containers, networks and volumes (deletes the database)
 ```
@@ -134,8 +134,8 @@ If the prompt does not appear, open the Command Palette (`Cmd+Shift+P`) and run:
 `Dev Containers: Reopen in Container`
 
 This connects VS Code to the running Odoo container. All workspace paths
-(`/opt/odoo-src`, `/mnt/reference`, `/mnt/extra-addons`) resolve from inside
-the container — the workspace file will not work without this step.
+(`/mnt/reference`, `/mnt/extra-addons`) resolve from inside the container —
+the workspace file will not work without this step.
 
 **3. Open the workspace file**
 
@@ -228,17 +228,35 @@ make pgadmin
 
 ## Operating mode
 
-This branch is configured for **upgrade** work — migrating custom modules between
-Odoo versions. Two versions are mounted simultaneously:
+The environment supports two modes, controlled by `ODOO_MODE` in your `.env`:
+
+### `maintenance` (default)
+
+Single Odoo version mounted read-only at `/mnt/reference`. Use this for custom
+module development and bugfixes on a running production version.
+
+Required `.env` variables: `ODOO_VERSION`
+
+### `upgrade`
+
+Two versions mounted simultaneously. Use this when migrating custom modules
+between Odoo versions.
 
 - **Target** (`/opt/odoo-src`) — the version being upgraded to (runs Odoo)
 - **Source** (`/mnt/reference`) — the version being upgraded from, read-only
 
-Both are visible in the VS Code workspace for side-by-side comparison without
-switching branches.
+Required `.env` variables: `ODOO_SOURCE_VERSION`, `ODOO_TARGET_VERSION`
 
-For maintenance and bugfix work on custom modules (single version, no upgrade
-tooling), use the `maintenance` branch.
+### Switching modes
+
+Change `ODOO_MODE` in your `.env` and restart:
+
+```bash
+# In .env
+ODOO_MODE=upgrade
+
+make restart-all
+```
 
 ## Database initialization
 
