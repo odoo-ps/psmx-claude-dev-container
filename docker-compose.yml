@@ -75,6 +75,8 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"
+    volumes:
+      - odoo-pgadmin-data:/var/lib/pgadmin
     depends_on:
       db:
         condition: service_healthy
@@ -88,3 +90,4 @@ services:
 volumes:
   odoo-web-data:
   odoo-db-data:
+  odoo-pgadmin-data:
