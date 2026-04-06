@@ -2,6 +2,7 @@ include .env
 export
 
 ODOO_MODE ?= maintenance
+CUSTOMERS_PATH ?= $(HOME)/Odoo/Customers
 
 # Compose files — base + mode-specific override
 COMPOSE_FILES := -f docker-compose.yml -f docker-compose.$(ODOO_MODE).yml
@@ -17,7 +18,7 @@ ODOO_CONF     := /etc/odoo/odoo.conf
 BUILD_VERSION := $(ODOO_VERSION)
 endif
 
-.PHONY: start stop restart restart-all logs shell ps init restore update test test-tags test-file build destroy fetch-all check-env check-image check-worktrees list-worktrees help
+.PHONY: start stop restart restart-all logs shell ps init restore update test test-tags test-file build destroy fetch-all check-env check-image check-worktrees list list-worktrees help
 
 check-env: ## Validate required .env variables for the active ODOO_MODE
 	@ok=1; \
@@ -184,6 +185,33 @@ build: ## Build the Docker image for the active version
 	docker build \
 		-t odoo-dev:$(BUILD_VERSION) \
 		$(ODOO_WORKTREE_PATH)/$(BUILD_VERSION)
+
+list: ## List all client environments and their running status
+	@_base="$(CUSTOMERS_PATH)"; \
+	echo ""; \
+	if [ ! -d "$$_base" ]; then \
+		echo "  \033[31mDirectory not found: $$_base\033[0m"; \
+		echo "  Create it or set CUSTOMERS_PATH in your .env."; \
+		echo ""; \
+		exit 0; \
+	fi; \
+	echo "  Clients in $$_base:"; \
+	echo ""; \
+	found=0; \
+	for dir in "$$_base"/*/; do \
+		[ -d "$$dir" ] || continue; \
+		found=1; \
+		name=$$(basename "$$dir"); \
+		_dir_clean="$${dir%/}"; \
+		running=$$(docker ps -q --filter "label=com.docker.compose.project.working_dir=$$_dir_clean" 2>/dev/null); \
+		if [ -n "$$running" ]; then \
+			printf "  \033[32m● %-20s\033[0m  running\n" "$$name"; \
+		else \
+			printf "  \033[90m○ %-20s\033[0m\n" "$$name"; \
+		fi; \
+	done; \
+	[ "$$found" = "1" ] || echo "  No clients found."; \
+	echo ""
 
 list-worktrees: ## List all available worktrees
 	@_path=$$(eval echo "$(ODOO_WORKTREE_PATH)"); \

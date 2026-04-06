@@ -28,6 +28,7 @@ make test modules=mod1,mod2              Update modules and run their tests
 make test-tags tags=/mod:Class.method    Run tests matching a tag, class or method
 make test-file file=/path/to/test.py     Run tests from a specific file
 make pgadmin                             Start pgAdmin4 at http://localhost:5050
+make list                                List all client environments and their running status
 make list-worktrees                      List available worktrees (active one highlighted)
 make fetch-all                           Fetch latest refs for all vault repos
 make destroy                             Remove all containers, networks and volumes (deletes the database)
