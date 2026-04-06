@@ -22,7 +22,7 @@ you choose, and installs upgrade tools.
 ```bash
 git clone git@github.com:eagf-odoo/odoo-dev-template.git template
 cd template
-setup.sh
+bash setup.sh
 ```
 
 The script is interactive and safe to re-run — it skips anything that already exists.
@@ -80,7 +80,7 @@ make start
 ```
 
 `make start` waits for Odoo to finish loading and prints a ready notice with the URL.
-Odoo will be available at http://localhost:8069
+Odoo will be available at <http://localhost:8069>
 
 ---
 

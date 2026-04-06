@@ -27,8 +27,7 @@ cp .env.example .env
 cp ~/Downloads/acme_prod.dump ~/Odoo/Dumps/
 
 # 6. Restore the database
-make restore dump=acme_prod.dump
-
+make restore dump=acme_prod.dump   # also accepts .sql files
 # Or initialize a fresh database instead:
 # make init
 
@@ -216,4 +215,4 @@ make start
 | Hot reload | `ODOO_EXTRA_ARGS=--dev=all` |
 | No debugger overhead | `ODOO_DEBUG=false` |
 | Fresh database | `make init` then `make start` |
-| Restore from dump | `make restore dump=file.dump` then `make start` |
+| Restore from dump | `make restore dump=file.dump` (or `.sql`) then `make start` |

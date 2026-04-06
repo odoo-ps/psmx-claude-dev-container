@@ -22,7 +22,7 @@ make shell                               Open a shell inside the Odoo container
 make ps                                  Show container status
 make build                               Build the Docker image for ODOO_VERSION
 make init                                Initialize a fresh database with the base module
-make restore dump=file.dump              Restore a database from ~/Odoo/Dumps/
+make restore dump=file.dump|sql          Restore a database from ~/Odoo/Dumps/ (.dump or .sql)
 make update modules=mod1,mod2            Update Odoo modules
 make test modules=mod1,mod2              Update modules and run their tests
 make test-tags tags=/mod:Class.method    Run tests matching a tag, class or method
