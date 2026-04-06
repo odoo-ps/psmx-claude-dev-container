@@ -94,10 +94,10 @@ cd ~/Odoo/Customers/acme
 make restore dump=acme_prod.dump
 
 # Update one or more modules
-make upgrade modules=acme_sale
+make update modules=acme_sale
 
 # Update multiple modules at once
-make upgrade modules=acme_sale,acme_account,acme_stock
+make update modules=acme_sale,acme_account,acme_stock
 
 # Watch the logs while the update runs
 make logs
@@ -148,11 +148,11 @@ make start
 # → /mnt/reference contains the source version for comparison
 
 # 6. Run the module migration
-make upgrade modules=acme_sale
+make update modules=acme_sale
 
 # 7. Iterate: restore clean → migrate → inspect → repeat
 make restore dump=acme_pre_upgrade.dump
-make upgrade modules=acme_sale
+make update modules=acme_sale
 ```
 
 In upgrade mode, VS Code workspace exposes both `/opt/odoo-src`

@@ -23,8 +23,8 @@ make ps                                  Show container status
 make build                               Build the Docker image for ODOO_VERSION
 make init                                Initialize a fresh database with the base module
 make restore dump=file.dump              Restore a database from ~/Odoo/Dumps/
-make upgrade modules=mod1,mod2           Upgrade Odoo modules
-make test modules=mod1,mod2              Upgrade modules and run their tests
+make update modules=mod1,mod2            Update Odoo modules
+make test modules=mod1,mod2              Update modules and run their tests
 make test-tags tags=/mod:Class.method    Run tests matching a tag, class or method
 make test-file file=/path/to/test.py     Run tests from a specific file
 make pgadmin                             Start pgAdmin4 at http://localhost:5050
@@ -171,11 +171,11 @@ ODOO_EXTRA_ARGS=--dev=all
 
 Three commands are available depending on the level of granularity needed:
 
-| Command | Flag | When to use |
-|---|---|---|
-| `make test` | `--test-enable` | Upgrade a module and run all its tests |
-| `make test-tags` | `--test-tags` (self-enabling) | Target a specific tag, class or method |
-| `make test-file` | `--test-file` | Run all tests in a specific Python file |
+| Command          | Flag                          | When to use                             |
+| ---------------- | ----------------------------- | --------------------------------------- |
+| `make test`      | `--test-enable`               | Upgrade a module and run all its tests  |
+| `make test-tags` | `--test-tags` (self-enabling) | Target a specific tag, class or method  |
+| `make test-file` | `--test-file`                 | Run all tests in a specific Python file |
 
 **Examples**
 
@@ -210,20 +210,24 @@ make pgadmin
 ### When to use it during an upgrade
 
 **Comparing schemas between versions**
+
 - Before and after an upgrade, inspect the real database schema — column types,
   constraints, indexes — and verify that the migration scripts transformed the
   data correctly.
 
 **Debugging SQL errors**
+
 - When a migration fails with a PostgreSQL error, pgAdmin lets you run raw SQL
   queries against the database to reproduce and diagnose the problem without
   restarting the full upgrade process.
 
 **Analyzing performance issues**
+
 - If Odoo is slow after an upgrade, use the query analysis tools to identify
   missing indexes or inefficient queries introduced by the new version.
 
 **Inspecting data after a restore**
+
 - After `make restore`, quickly verify that the dump was restored correctly —
   row counts, field values, related records — before starting the upgrade iteration.
 

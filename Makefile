@@ -17,7 +17,32 @@ ODOO_CONF     := /etc/odoo/odoo.conf
 BUILD_VERSION := $(ODOO_VERSION)
 endif
 
-.PHONY: start stop restart restart-all logs shell ps init restore upgrade test test-tags test-file build destroy fetch-all check-worktrees list-worktrees help
+.PHONY: start stop restart restart-all logs shell ps init restore update test test-tags test-file build destroy fetch-all check-env check-image check-worktrees list-worktrees help
+
+check-env: ## Validate required .env variables for the active ODOO_MODE
+	@ok=1; \
+	_fail() { printf "  \033[31mError: %s is not set in .env\033[0m\n" "$$1"; ok=0; }; \
+	[ -n "$(ODOO_DB_NAME)" ]        || _fail ODOO_DB_NAME; \
+	[ -n "$(CUSTOMER_REPO)" ]       || _fail CUSTOMER_REPO; \
+	[ -n "$(ODOO_UPGRADE_PATH)" ]   || _fail ODOO_UPGRADE_PATH; \
+	[ -n "$(ODOO_VAULT_PATH)" ]     || _fail ODOO_VAULT_PATH; \
+	[ -n "$(ODOO_WORKTREE_PATH)" ]  || _fail ODOO_WORKTREE_PATH; \
+	if [ "$(ODOO_MODE)" = "upgrade" ]; then \
+		[ -n "$(ODOO_SOURCE_VERSION)" ] || _fail ODOO_SOURCE_VERSION; \
+		[ -n "$(ODOO_TARGET_VERSION)" ] || _fail ODOO_TARGET_VERSION; \
+	else \
+		[ -n "$(ODOO_VERSION)" ] || _fail ODOO_VERSION; \
+	fi; \
+	[ "$$ok" = "1" ] || { echo ""; echo "  Fix the above before running make."; echo ""; exit 1; }
+
+check-image: ## Verify the Docker image exists for the active version
+	@if ! docker image inspect odoo-dev:$(BUILD_VERSION) > /dev/null 2>&1; then \
+		echo ""; \
+		echo "  \033[31mError: image odoo-dev:$(BUILD_VERSION) not found.\033[0m"; \
+		echo "  Run: make build"; \
+		echo ""; \
+		exit 1; \
+	fi
 
 check-worktrees:
 	@if [ "$(ODOO_MODE)" = "upgrade" ]; then \
@@ -48,19 +73,11 @@ check-worktrees:
 		fi; \
 	fi
 
-start: check-worktrees ## Start the environment
+start: check-env check-worktrees check-image ## Start the environment
 	docker compose $(COMPOSE_FILES) up -d
 	@echo ""
-	@docker compose $(COMPOSE_FILES) logs -f web 2>/dev/null | grep --line-buffered -m 1 "odoo.modules.loading: Modules loaded." > /dev/null & \
-	GREP_PID=$$!; \
-	spin='-\|/'; \
-	i=0; \
-	while kill -0 $$GREP_PID 2>/dev/null; do \
-		i=$$(( (i + 1) % 4 )); \
-		printf "\r  Waiting for Odoo to be ready... [%s] " "$${spin:$$i:1}"; \
-		sleep 0.1; \
-	done; \
-	printf "\r  \033[32m✓ Odoo is ready → http://localhost:$${ODOO_PORT:-8069}\033[0m          \n"
+	@echo "  \033[32m✓ Environment started → http://localhost:$${ODOO_PORT:-8069}\033[0m"
+	@echo "  Run 'make logs' in a new terminal to follow the Odoo startup."
 	@echo ""
 
 stop: ## Stop the environment
@@ -116,7 +133,7 @@ init: check-worktrees ## Initialize a fresh database with the base module
 restore: ## Restore a database. Usage: make restore dump=file.dump
 	./restore.sh dumps/$(dump)
 
-upgrade: check-worktrees ## Upgrade Odoo modules. Usage: make upgrade modules=mod1,mod2
+update: check-worktrees ## Update Odoo modules. Usage: make update modules=mod1,mod2
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME) \
@@ -206,6 +223,6 @@ help: ## Show this help message
 	@echo ""
 	@echo "Examples:"
 	@echo "  make restore dump=client_prod.dump"
-	@echo "  make upgrade modules=sale,account"
+	@echo "  make update modules=sale,account"
 	@echo "  make build"
 	@echo ""
