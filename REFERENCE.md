@@ -276,3 +276,41 @@ Use `make restore dump=file.dump` to restore from an existing dump instead.
 Do not put `-i base` in `ODOO_EXTRA_ARGS` — it would reinstall the base module
 on every startup. `ODOO_EXTRA_ARGS` is reserved for arguments that apply on
 every run (e.g. `--dev=all`).
+
+---
+
+## Troubleshooting
+
+### `make start` says the image does not exist but it does
+
+`check-image` looks for an image named exactly `odoo-dev:<version>`. Two things can cause this error even when the image appears to be present.
+
+**The image has a different name or tag**
+
+The Makefile only accepts `odoo-dev:<version>`. If you built or pulled the image under a different name, tag it:
+
+```bash
+docker tag <your-image> odoo-dev:19.0
+```
+
+**The image was built under a different Docker context**
+
+Docker Desktop on Mac runs two contexts (`default` and `desktop-linux`) backed by different Unix sockets and separate image namespaces. An image built while `default` was active is not visible to `desktop-linux`, and vice versa. The confusing part: `docker images` may list the image anyway due to a known Docker Desktop inconsistency, but `docker image inspect` (which `check-image` uses) will fail.
+
+Check your active context:
+
+```bash
+docker context ls   # active one is marked with *
+```
+
+If the image is listed but `inspect` fails, re-register the tag under the current context using the full image SHA:
+
+```bash
+# Find the SHA
+docker images --no-trunc --format "{{.ID}} {{.Repository}}:{{.Tag}}" | grep odoo-dev
+
+# Re-tag under the active context
+docker tag sha256:<full-sha> odoo-dev:19.0
+```
+
+To avoid this entirely: always use `make build` to create images. This guarantees the image is built and tagged in whichever context is currently active.

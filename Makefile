@@ -120,13 +120,32 @@ init: check-worktrees ## Initialize a fresh database with the base module
 	@docker compose $(COMPOSE_FILES) exec db dropdb -U odoo --if-exists $(ODOO_DB_NAME) > /dev/null 2>&1
 	@echo "  Creating fresh database ($(ODOO_DB_NAME))..."
 	@docker compose $(COMPOSE_FILES) exec db createdb -U odoo $(ODOO_DB_NAME) > /dev/null 2>&1
-	@echo "  Installing base module (this may take a while)..."
-	@docker compose $(COMPOSE_FILES) run --rm --no-deps web \
-		python3 $(ODOO_BIN) \
-		--config $(ODOO_CONF) \
-		-d $(ODOO_DB_NAME) \
-		-i base \
-		--stop-after-init
+	@_log=$$(mktemp /tmp/odoo-init.XXXXXX); \
+	docker compose $(COMPOSE_FILES) run --rm --no-deps -T web \
+		python3 $(ODOO_BIN) --config $(ODOO_CONF) \
+		-d $(ODOO_DB_NAME) -i base --stop-after-init \
+		> "$$_log" 2>&1 & \
+	_pid=$$!; _i=0; \
+	while kill -0 "$$_pid" 2>/dev/null; do \
+		case $$((_i % 4)) in \
+			0) printf '\r  | Installing base module...' ;; \
+			1) printf '\r  / Installing base module...' ;; \
+			2) printf '\r  - Installing base module...' ;; \
+			*) printf '\r  + Installing base module...' ;; \
+		esac; \
+		sleep 0.15; \
+		_i=$$((_i + 1)); \
+	done; \
+	wait "$$_pid"; _code=$$?; \
+	printf '\r%-60s\r' ''; \
+	if [ "$$_code" -ne 0 ]; then \
+		printf '  \033[31mError during base module installation.\033[0m\n\n'; \
+		cat "$$_log"; \
+		rm -f "$$_log"; \
+		exit $$_code; \
+	fi; \
+	rm -f "$$_log"; \
+	echo "  Installing base module... done"
 	@echo ""
 	@echo "  \033[32m✓ Database initialized. Run 'make start' to launch Odoo.\033[0m"
 	@echo ""
