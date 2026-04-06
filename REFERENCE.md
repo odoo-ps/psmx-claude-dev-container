@@ -13,7 +13,7 @@ see [WORKFLOWS.md](WORKFLOWS.md).
 ## Available commands
 
 ```
-make start                               Start the environment and wait until Odoo is ready
+make start                               Start the environment
 make stop                                Stop the environment (including pgAdmin if running)
 make restart                             Restart the Odoo server (keeps the database running)
 make restart-all                         Restart the entire stack (Odoo + database)
@@ -24,7 +24,7 @@ make build                               Build the Docker image for ODOO_VERSION
 make init                                Initialize a fresh database with the base module
 make restore dump=file.dump|sql          Restore a database from ~/Odoo/Dumps/ (.dump or .sql)
 make update modules=mod1,mod2            Update Odoo modules
-make test modules=mod1,mod2              Update modules and run their tests
+make test modules=mod1,mod2              Update modules and run Odoo test suite.
 make test-tags tags=/mod:Class.method    Run tests matching a tag, class or method
 make test-file file=/path/to/test.py     Run tests from a specific file
 make pgadmin                             Start pgAdmin4 at http://localhost:5050
@@ -174,7 +174,7 @@ Three commands are available depending on the level of granularity needed:
 
 | Command          | Flag                          | When to use                             |
 | ---------------- | ----------------------------- | --------------------------------------- |
-| `make test`      | `--test-enable`               | Upgrade a module and run all its tests  |
+| `make test`      | `--test-enable`               | Upgrade a module and run all tests      |
 | `make test-tags` | `--test-tags` (self-enabling) | Target a specific tag, class or method  |
 | `make test-file` | `--test-file`                 | Run all tests in a specific Python file |
 

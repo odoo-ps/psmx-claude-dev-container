@@ -2,6 +2,9 @@
 
 Dockerized development environment for Odoo. Designed for custom module development, upgrades between versions, and client maintenance.
 
+> Throughout this document, `acme` is used as a placeholder company name in examples.
+> Replace it with the actual client name in every command.
+
 ---
 
 ## Prerequisites
@@ -79,7 +82,8 @@ make restore dump=acme_prod.dump
 make start
 ```
 
-`make start` waits for Odoo to finish loading and prints a ready notice with the URL.
+`make start` launches the stack in the background and prints the URL once the containers
+are up. Run `make logs` in a separate terminal to follow the Odoo startup.
 Odoo will be available at <http://localhost:8069>
 
 ---
