@@ -5,6 +5,9 @@ Complete reference for all commands and features of the Odoo Dev Environment Tem
 For practical step-by-step scenarios (upgrade loop, two clients simultaneously, etc.)
 see [WORKFLOWS.md](WORKFLOWS.md).
 
+> Throughout this document, `acme` and `honex` are used as placeholder company names
+> in examples. Replace them with the actual client name in every command.
+
 ---
 
 ## Available commands
