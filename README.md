@@ -65,19 +65,14 @@ make build
 > Skip this step if `odoo-dev:<version>` was already built on this machine
 > (e.g. another client uses the same Odoo version).
 
-**4. Initialize or restore a database**
-
-For a fresh database:
-
-```bash
-make reset
-```
-
-To restore from a dump file:
+**4. Restore a database** *(optional)*
 
 ```bash
 make restore dump=acme_prod.dump
 ```
+
+> Skip this step to start with a fresh empty database — Odoo creates it
+> automatically on first `make start`.
 
 **5. Start the environment**
 

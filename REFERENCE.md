@@ -295,22 +295,14 @@ docker tag <your-image> odoo-dev:19.0
 
 **The image was built under a different Docker context**
 
-Docker Desktop on Mac runs two contexts (`default` and `desktop-linux`) backed by different Unix sockets and separate image namespaces. An image built while `default` was active is not visible to `desktop-linux`, and vice versa. The confusing part: `docker images` may list the image anyway due to a known Docker Desktop inconsistency, but `docker image inspect` (which `check-image` uses) will fail.
+Docker Desktop on Mac runs two contexts (`default` and `desktop-linux`) backed by different Unix sockets. An image built in one context may not be visible to the other due to a known Docker Desktop inconsistency with `docker image inspect`.
 
-Check your active context:
+`check-image` now detects this automatically. If the image exists in another context, the error message will tell you exactly which one and offer two options:
 
-```bash
-docker context ls   # active one is marked with *
+```
+Found in context 'default' but active context is 'desktop-linux'.
+Option 1: switch context →  docker context use default
+Option 2: rebuild here   →  make build
 ```
 
-If the image is listed but `inspect` fails, re-register the tag under the current context using the full image SHA:
-
-```bash
-# Find the SHA
-docker images --no-trunc --format "{{.ID}} {{.Repository}}:{{.Tag}}" | grep odoo-dev
-
-# Re-tag under the active context
-docker tag sha256:<full-sha> odoo-dev:19.0
-```
-
-To avoid this entirely: always use `make build` to create images. This guarantees the image is built and tagged in whichever context is currently active.
+Option 1 is instant. Option 2 rebuilds the image in the current context (preferred if you want to stay on `desktop-linux`).

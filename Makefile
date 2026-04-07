@@ -39,8 +39,23 @@ check-env: ## Validate required .env variables for the active ODOO_MODE
 check-image: ## Verify the Docker image exists for the active version
 	@if ! docker image inspect odoo-dev:$(BUILD_VERSION) > /dev/null 2>&1; then \
 		echo ""; \
-		echo "  \033[31mError: image odoo-dev:$(BUILD_VERSION) not found.\033[0m"; \
-		echo "  Run: make build"; \
+		echo "  \033[31mError: image odoo-dev:$(BUILD_VERSION) not found in current context.\033[0m"; \
+		_found=""; \
+		_current=$$(docker context show 2>/dev/null); \
+		for _ctx in $$(docker context ls -q 2>/dev/null); do \
+			[ "$$_ctx" = "$$_current" ] && continue; \
+			if docker --context "$$_ctx" image inspect odoo-dev:$(BUILD_VERSION) > /dev/null 2>&1; then \
+				_found="$$_ctx"; \
+				break; \
+			fi; \
+		done; \
+		if [ -n "$$_found" ]; then \
+			echo "  Found in context '\033[33m$$_found\033[0m' but active context is '\033[33m$$_current\033[0m'."; \
+			echo "  Option 1: switch context →  docker context use $$_found"; \
+			echo "  Option 2: rebuild here   →  make build"; \
+		else \
+			echo "  Run: make build"; \
+		fi; \
 		echo ""; \
 		exit 1; \
 	fi
