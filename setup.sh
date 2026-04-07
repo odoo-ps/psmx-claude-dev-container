@@ -311,33 +311,10 @@ setup_upgrade_tools() {
 }
 
 # --- 7. Docker images --------------------------------------------------------
-setup_docker_images() {
-    print_section "Docker images"
-    echo ""
-    echo -e "  How do you want to get the Docker images?"
-    echo ""
-    echo -e "    ${BOLD}1)${NC} Build locally from Dockerfile"
-    echo -e "    ${BOLD}2)${NC} Skip — I'll handle this later"
-    echo ""
-    read -rp "  Choice [1/2]: " image_choice
-    echo ""
-
-    case "$image_choice" in
-        1)
-            for version in "${SELECTED_VERSIONS[@]}"; do
-                echo -e "  Building ${BOLD}odoo-dev:$version${NC}..."
-                docker build \
-                    -t "odoo-dev:$version" \
-                    "$WORKTREES_DIR/$version" \
-                    && print_ok "odoo-dev:$version" \
-                    || print_error "Build failed for $version — run 'make build' manually"
-            done
-            ;;
-        *)
-            print_info "Skipped — run 'make build' from a client folder when ready"
-            ;;
-    esac
-}
+# Docker images are built per-client via 'make build' from the client folder.
+# Building here would be context-dependent and could cause 'check-image' to
+# fail if the Docker context changes between setup and 'make start'.
+# See WORKFLOWS.md section 6 for details.
 
 # --- 8. Summary --------------------------------------------------------------
 print_summary() {
@@ -356,7 +333,9 @@ print_summary() {
     echo -e "     ${CYAN}git clone git@github.com:eagf-odoo/odoo-dev-template.git ~/Odoo/Customers/<client>${NC}"
     echo -e "  2. Configure the environment:"
     echo -e "     ${CYAN}cp .env.example .env && \$EDITOR .env${NC}"
-    echo -e "  3. Start the environment:"
+    echo -e "  3. Build the Docker image (first time per version):"
+    echo -e "     ${CYAN}make build${NC}"
+    echo -e "  4. Start the environment:"
     echo -e "     ${CYAN}make start${NC}"
     echo ""
     echo -e "  See ${BOLD}WORKFLOWS.md${NC} for common day-to-day scenarios."
@@ -372,7 +351,6 @@ main() {
     select_versions
     create_worktrees
     setup_upgrade_tools
-    setup_docker_images
     cleanup_donors
     print_summary
 }

@@ -21,7 +21,10 @@ git clone git@github.com:acme/acme-addons.git ~/Odoo/Repos/acme-addons
 cp .env.example .env
 # Edit .env — set ODOO_MODE=maintenance, ODOO_VERSION, CUSTOMER_REPO, ODOO_DB_NAME, etc.
 
-# 4. Get the Docker image (see section 6 or 7)
+# 4. Build the Docker image
+#    Skip this step if odoo-dev:<version> was already built on this machine
+#    (e.g. another client uses the same Odoo version).
+make build
 
 # 5. Place the database dump
 cp ~/Downloads/acme_prod.dump ~/Odoo/Dumps/
@@ -163,10 +166,11 @@ To switch back to maintenance mode, set `ODOO_MODE=maintenance` in
 
 ---
 
-## 6. Building the Docker image locally
+## 6. Building the Docker image
 
-Use this when the image is not available on DockerHub or you need to
-test changes to the Dockerfile.
+Required the first time you use a given Odoo version on this machine.
+Subsequent clients on the same version can skip this step — the image
+is global to the Docker daemon and shared across all projects.
 
 ```bash
 cd ~/Odoo/Customers/acme
@@ -200,6 +204,10 @@ docker tag your-dockerhub-user/odoo-dev:18.0 odoo-dev:18.0
 # Start the environment normally
 make start
 ```
+
+> Run `docker pull` from the same terminal session where you will run
+> `make start`. Both commands must use the same Docker context — pulling
+> in one context and starting in another will cause `check-image` to fail.
 
 
 ---

@@ -62,6 +62,9 @@ and database name.
 make build
 ```
 
+> Skip this step if `odoo-dev:<version>` was already built on this machine
+> (e.g. another client uses the same Odoo version).
+
 **4. Initialize or restore a database**
 
 For a fresh database:
