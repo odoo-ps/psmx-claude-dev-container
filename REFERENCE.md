@@ -21,7 +21,7 @@ make logs                                Stream Odoo server logs
 make shell                               Open a shell inside the Odoo container
 make ps                                  Show container status
 make build                               Build the Docker image for ODOO_VERSION
-make init                                Initialize a fresh database with the base module
+make reset                               Reset the database: drop, recreate, and install base module
 make restore dump=file.dump|sql          Restore a database from ~/Odoo/Dumps/ (.dump or .sql)
 make update modules=mod1,mod2            Update Odoo modules
 make test modules=mod1,mod2              Update modules and run Odoo test suite.
@@ -266,9 +266,9 @@ ODOO_MODE=upgrade
 make restart-all
 ```
 
-## Database initialization
+## Database reset
 
-Use `make init` to create a fresh database. This drops any existing database,
+Use `make reset` to reset the database. This drops any existing database,
 creates a new one, and installs the `base` module with `--stop-after-init`.
 Run `make start` afterwards to launch Odoo normally.
 

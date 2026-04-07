@@ -67,7 +67,7 @@ make build
 For a fresh database:
 
 ```bash
-make init
+make reset
 ```
 
 To restore from a dump file:

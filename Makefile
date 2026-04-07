@@ -106,7 +106,7 @@ pgadmin: ## Start pgAdmin4 at http://localhost:5050
 		|| true
 	@echo ""
 
-init: check-worktrees ## Initialize a fresh database with the base module
+reset: check-worktrees ## Reset the database: drop, recreate, and install base module
 	@echo ""
 	@echo "  \033[33mWARNING\033[0m: This will drop and recreate the database '$(ODOO_DB_NAME)'."
 	@echo ""

@@ -29,7 +29,7 @@ cp ~/Downloads/acme_prod.dump ~/Odoo/Dumps/
 # 6. Restore the database
 make restore dump=acme_prod.dump   # also accepts .sql files
 # Or initialize a fresh database instead:
-# make init
+# make reset
 
 # 7. Start the environment
 make start
@@ -214,5 +214,5 @@ make start
 | Version upgrade | `ODOO_MODE=upgrade`, `ODOO_SOURCE_VERSION`, `ODOO_TARGET_VERSION` |
 | Hot reload | `ODOO_EXTRA_ARGS=--dev=all` |
 | No debugger overhead | `ODOO_DEBUG=false` |
-| Fresh database | `make init` then `make start` |
+| Fresh database | `make reset` then `make start` |
 | Restore from dump | `make restore dump=file.dump` (or `.sql`) then `make start` |
