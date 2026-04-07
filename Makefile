@@ -18,7 +18,7 @@ ODOO_CONF     := /etc/odoo/odoo.conf
 BUILD_VERSION := $(ODOO_VERSION)
 endif
 
-.PHONY: start stop restart restart-all logs shell ps init restore update test test-tags test-file build destroy fetch-all check-env check-image check-worktrees list list-worktrees help
+.PHONY: start stop restart restart-all logs shell ps init restore update test test-tags test-file build destroy fetch-all check-env check-image check-ports check-worktrees list list-worktrees help
 
 check-env: ## Validate required .env variables for the active ODOO_MODE
 	@ok=1; \
@@ -60,6 +60,28 @@ check-image: ## Verify the Docker image exists for the active version
 		exit 1; \
 	fi
 
+check-ports: ## Check that ODOO_PORT and ODOO_DEBUG_PORT are not already in use
+	@_ok=1; \
+	_check_port() { \
+		_port=$$1; _var=$$2; \
+		_container=$$(docker ps --format '{{.Names}}\t{{.Ports}}' 2>/dev/null \
+			| awk -v p="$$_port" '$$0 ~ ":"p"->" {print $$1}'); \
+		if [ -n "$$_container" ]; then \
+			echo ""; \
+			echo "  \033[31mError: $$_var=$$_port is already used by container '$$_container'.\033[0m"; \
+			echo "  Set a different $$_var in .env (e.g. $$_var=$$((_port + 1)))"; \
+			_ok=0; \
+		elif lsof -i "TCP:$$_port" -sTCP:LISTEN > /dev/null 2>&1; then \
+			echo ""; \
+			echo "  \033[31mError: $$_var=$$_port is already in use by another process.\033[0m"; \
+			echo "  Set a different $$_var in .env (e.g. $$_var=$$((_port + 1)))"; \
+			_ok=0; \
+		fi; \
+	}; \
+	_check_port "$${ODOO_PORT:-8069}" "ODOO_PORT"; \
+	_check_port "$${ODOO_DEBUG_PORT:-5678}" "ODOO_DEBUG_PORT"; \
+	[ "$$_ok" = "1" ] || { echo ""; exit 1; }
+
 check-worktrees:
 	@if [ "$(ODOO_MODE)" = "upgrade" ]; then \
 		_target=$$(eval echo "$(ODOO_WORKTREE_PATH)/$(ODOO_TARGET_VERSION)"); \
@@ -89,7 +111,7 @@ check-worktrees:
 		fi; \
 	fi
 
-start: check-env check-worktrees check-image ## Start the environment
+start: check-env check-worktrees check-image check-ports ## Start the environment
 	docker compose $(COMPOSE_FILES) up -d
 	@echo ""
 	@echo "  \033[32m✓ Environment started → http://localhost:$${ODOO_PORT:-8069}\033[0m"
