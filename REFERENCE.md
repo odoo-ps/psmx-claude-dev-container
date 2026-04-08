@@ -283,7 +283,7 @@ every run (e.g. `--dev=all`).
 
 ### `make start` says the image does not exist but it does
 
-`check-image` looks for an image named exactly `odoo-dev:<version>`. Two things can cause this error even when the image appears to be present.
+`make start` looks for an image named exactly `odoo-dev:<version>`. Two things can cause this error even when the image appears to be present.
 
 **The image has a different name or tag**
 
@@ -297,7 +297,7 @@ docker tag <your-image> odoo-dev:19.0
 
 Docker Desktop on Mac runs two contexts (`default` and `desktop-linux`) backed by different Unix sockets. An image built in one context may not be visible to the other due to a known Docker Desktop inconsistency with `docker image inspect`.
 
-`check-image` now detects this automatically. If the image exists in another context, the error message will tell you exactly which one and offer two options:
+`make start` now detects this automatically. If the image exists in another context, the error message will tell you exactly which one and offer two options:
 
 ```
 Found in context 'default' but active context is 'desktop-linux'.

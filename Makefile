@@ -20,7 +20,7 @@ endif
 
 .PHONY: start stop restart restart-all logs shell ps init restore update test test-tags test-file build destroy fetch-all check-env check-image check-ports check-worktrees list list-worktrees help
 
-check-env: ## Validate required .env variables for the active ODOO_MODE
+check-env:
 	@ok=1; \
 	_fail() { printf "  \033[31mError: %s is not set in .env\033[0m\n" "$$1"; ok=0; }; \
 	[ -n "$(ODOO_DB_NAME)" ]        || _fail ODOO_DB_NAME; \
@@ -36,31 +36,38 @@ check-env: ## Validate required .env variables for the active ODOO_MODE
 	fi; \
 	[ "$$ok" = "1" ] || { echo ""; echo "  Fix the above before running make."; echo ""; exit 1; }
 
-check-image: ## Verify the Docker image exists for the active version
+check-image:
 	@if ! docker image inspect odoo-dev:$(BUILD_VERSION) > /dev/null 2>&1; then \
-		echo ""; \
-		echo "  \033[31mError: image odoo-dev:$(BUILD_VERSION) not found in current context.\033[0m"; \
-		_found=""; \
-		_current=$$(docker context show 2>/dev/null); \
-		for _ctx in $$(docker context ls -q 2>/dev/null); do \
-			[ "$$_ctx" = "$$_current" ] && continue; \
-			if docker --context "$$_ctx" image inspect odoo-dev:$(BUILD_VERSION) > /dev/null 2>&1; then \
-				_found="$$_ctx"; \
-				break; \
-			fi; \
-		done; \
-		if [ -n "$$_found" ]; then \
-			echo "  Found in context '\033[33m$$_found\033[0m' but active context is '\033[33m$$_current\033[0m'."; \
-			echo "  Option 1: switch context →  docker context use $$_found"; \
-			echo "  Option 2: rebuild here   →  make build"; \
+		if [ -n "$$(docker images --filter reference=odoo-dev:$(BUILD_VERSION) --format '{{.ID}}')" ]; then \
+			printf "  \033[33mDocker Desktop reinitialized — re-registering image (cache)...\033[0m\n"; \
+			docker build -t odoo-dev:$(BUILD_VERSION) $(ODOO_WORKTREE_PATH)/$(BUILD_VERSION) > /dev/null 2>&1 \
+				&& printf "  \033[32m✓ Image re-registered.\033[0m\n" \
+				|| { echo ""; echo "  \033[31mFailed to re-register. Run: make build\033[0m"; echo ""; exit 1; }; \
 		else \
-			echo "  Run: make build"; \
+			echo ""; \
+			echo "  \033[31mError: image odoo-dev:$(BUILD_VERSION) not found in current context.\033[0m"; \
+			_found=""; \
+			_current=$$(docker context show 2>/dev/null); \
+			for _ctx in $$(docker context ls -q 2>/dev/null); do \
+				[ "$$_ctx" = "$$_current" ] && continue; \
+				if docker --context "$$_ctx" image inspect odoo-dev:$(BUILD_VERSION) > /dev/null 2>&1; then \
+					_found="$$_ctx"; \
+					break; \
+				fi; \
+			done; \
+			if [ -n "$$_found" ]; then \
+				echo "  Found in context '\033[33m$$_found\033[0m' but active context is '\033[33m$$_current\033[0m'."; \
+				echo "  Option 1: switch context →  docker context use $$_found"; \
+				echo "  Option 2: rebuild here   →  make build"; \
+			else \
+				echo "  Run: make build"; \
+			fi; \
+			echo ""; \
+			exit 1; \
 		fi; \
-		echo ""; \
-		exit 1; \
 	fi
 
-check-ports: ## Check that ODOO_PORT and ODOO_DEBUG_PORT are not already in use
+check-ports:
 	@_ok=1; \
 	_check_port() { \
 		_port=$$1; _var=$$2; \

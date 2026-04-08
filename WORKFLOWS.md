@@ -207,7 +207,7 @@ make start
 
 > Run `docker pull` from the same terminal session where you will run
 > `make start`. Both commands must use the same Docker context — pulling
-> in one context and starting in another will cause `check-image` to fail.
+> in one context and starting in another will cause `make start` to fail.
 
 
 ---
