@@ -19,7 +19,7 @@ git clone git@github.com:acme/acme-addons.git ~/Odoo/Repos/acme-addons
 
 # 3. Configure the environment
 cp .env.example .env
-# Edit .env — set ODOO_MODE=maintenance, ODOO_VERSION, CUSTOMER_REPO, ODOO_DB_NAME, etc.
+# Edit .env — set ODOO_MODE=development, ODOO_VERSION, CUSTOMER_REPO, ODOO_DB_NAME, etc.
 
 # 4. Build the Docker image
 #    Skip this step if odoo-dev:<version> was already built on this machine
@@ -104,7 +104,13 @@ make update modules=acme_sale,acme_account,acme_stock
 # Watch the logs while the update runs
 make logs
 
-# If you need to inspect the database
+# Quick SQL queries against the database
+make psql
+
+# ORM interaction (Python REPL with env pre-loaded)
+make shell
+
+# Full GUI — schema inspection, query analysis
 make pgadmin
 # → http://localhost:5050
 ```
@@ -161,7 +167,7 @@ In upgrade mode, VS Code workspace exposes both `/opt/odoo-src`
 (target) and `/mnt/reference` (source) so you can diff views and
 models side by side.
 
-To switch back to maintenance mode, set `ODOO_MODE=maintenance` in
+To switch back to development mode, set `ODOO_MODE=development` in
 `.env` and run `make restart-all`.
 
 ---
@@ -218,7 +224,7 @@ make start
 |---|---|
 | Single client | Default ports (`8069`, `5678`) |
 | Two clients | Different `ODOO_PORT` and `ODOO_DEBUG_PORT` per client |
-| Maintenance / bugfix | `ODOO_MODE=maintenance`, `ODOO_VERSION` |
+| Development / bugfix | `ODOO_MODE=development`, `ODOO_VERSION` |
 | Version upgrade | `ODOO_MODE=upgrade`, `ODOO_SOURCE_VERSION`, `ODOO_TARGET_VERSION` |
 | Hot reload | `ODOO_EXTRA_ARGS=--dev=all` |
 | No debugger overhead | `ODOO_DEBUG=false` |

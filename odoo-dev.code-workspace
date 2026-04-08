@@ -3,7 +3,7 @@
     // It will only work after reopening the project with the Dev Containers extension:
     // "Dev Containers: Reopen in Container" (Cmd+Shift+P)
     //
-    // Folders cover both ODOO_MODE=maintenance and ODOO_MODE=upgrade.
+    // Folders cover both ODOO_MODE=development and ODOO_MODE=upgrade.
     // VS Code silently ignores folders that do not exist in the current mode.
     "folders": [
         {

@@ -18,7 +18,8 @@ make stop                                Stop the environment (including pgAdmin
 make restart                             Restart the Odoo server (keeps the database running)
 make restart-all                         Restart the entire stack (Odoo + database)
 make logs                                Stream Odoo server logs
-make shell                               Open a shell inside the Odoo container
+make shell                               Open an Odoo ORM shell (Python REPL with env pre-loaded)
+make psql                                Open a psql shell against the active database
 make ps                                  Show container status
 make build                               Build the Docker image for ODOO_VERSION
 make reset                               Reset the database: drop, recreate, and install base module
@@ -198,6 +199,36 @@ make test-file file=/mnt/extra-addons/acme_sale/tests/test_sale_order.py
 
 ---
 
+## ORM Shell / psql
+
+Two ways to interact directly with the running environment without a GUI.
+
+### `make shell` — Odoo ORM shell
+
+Opens a Python REPL with the Odoo `env` variable pre-loaded and connected to
+the active database. Changes run inside a transaction that is rolled back on
+exit — use `env.cr.commit()` to persist them.
+
+```python
+# Example: add an exclamation mark to all partner names
+records = env["res.partner"].search([])
+for partner in records:
+    partner.name = "%s !" % partner.name
+env.cr.commit()
+```
+
+### `make psql` — PostgreSQL shell
+
+Opens a `psql` session directly against the active database. Useful for raw
+SQL queries, schema inspection, or debugging without launching pgAdmin.
+
+```sql
+-- Example: check the number of partners
+SELECT COUNT(*) FROM res_partner;
+```
+
+---
+
 ## pgAdmin4
 
 pgAdmin4 is included as an optional service for database inspection. It is not
@@ -238,10 +269,10 @@ make pgadmin
 
 The environment supports two modes, controlled by `ODOO_MODE` in your `.env`:
 
-### `maintenance` (default)
+### `development` (default)
 
 Single Odoo version mounted read-only at `/mnt/reference`. Use this for custom
-module development and bugfixes on a running production version.
+module development, new module creation, and bugfixes on a running production version.
 
 Required `.env` variables: `ODOO_VERSION`
 

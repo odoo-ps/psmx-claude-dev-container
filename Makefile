@@ -1,7 +1,7 @@
 include .env
 export
 
-ODOO_MODE ?= maintenance
+ODOO_MODE ?= development
 CUSTOMERS_PATH ?= $(HOME)/Odoo/Customers
 
 # Compose files — base + mode-specific override
@@ -18,7 +18,7 @@ ODOO_CONF     := /etc/odoo/odoo.conf
 BUILD_VERSION := $(ODOO_VERSION)
 endif
 
-.PHONY: start stop restart restart-all logs shell ps init restore update test test-tags test-file build destroy fetch-all check-env check-image check-ports check-worktrees list list-worktrees help
+.PHONY: start stop restart restart-all logs shell psql ps init restore update test test-tags test-file build destroy fetch-all check-env check-image check-ports check-worktrees list list-worktrees help
 
 check-env:
 	@ok=1; \
@@ -136,8 +136,13 @@ restart-all: stop start ## Restart the entire stack (Odoo + database)
 logs: ## Stream Odoo server logs
 	docker compose $(COMPOSE_FILES) logs -f web
 
-shell: ## Open a shell inside the Odoo container
-	docker compose $(COMPOSE_FILES) exec web bash
+shell: ## Open an Odoo ORM shell (Python REPL with env pre-loaded)
+	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) shell \
+		-c $(ODOO_CONF) \
+		-d $(ODOO_DB_NAME)
+
+psql: ## Open a psql shell against the active database
+	docker compose $(COMPOSE_FILES) exec db psql -U odoo -d $(ODOO_DB_NAME)
 
 ps: ## Show container status
 	docker compose $(COMPOSE_FILES) ps

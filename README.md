@@ -47,7 +47,7 @@ cd ~/Odoo/Customers/acme
 cp .env.example .env
 ```
 
-Edit `.env` with the values for your client. Set `ODOO_MODE` to `maintenance`
+Edit `.env` with the values for your client. Set `ODOO_MODE` to `development`
 or `upgrade`, fill in the corresponding version variables, and configure paths
 and database name.
 
