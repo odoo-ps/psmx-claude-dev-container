@@ -101,6 +101,7 @@ cmd_add() {
         for repo in "${REPOS[@]}"; do
             echo -e "  ${BOLD}${repo}${NC}"
             git -C "$VAULT_DIR/${repo}.git" fetch --prune origin \
+                '+refs/heads/*:refs/remotes/origin/*' \
                 && print_ok "fetched" \
                 || { print_error "fetch failed — check your SSH access to GitHub"; exit 1; }
         done
@@ -122,8 +123,7 @@ cmd_add() {
         if [[ -d "$dest" ]]; then
             print_skip "Worktrees/$version/$repo"
         else
-            git -C "$VAULT_DIR/${repo}.git" worktree add "$dest" "$version" 2>/dev/null \
-                || git -C "$VAULT_DIR/${repo}.git" worktree add "$dest" "origin/$version"
+            git -C "$VAULT_DIR/${repo}.git" worktree add "$dest" "origin/$version"
             print_ok "Worktrees/$version/$repo"
         fi
     done

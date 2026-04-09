@@ -69,10 +69,10 @@ git clone --bare --local ~/odoo-donor ~/Odoo/.vault/odoo.git
 git -C ~/Odoo/.vault/odoo.git remote set-url origin git@github.com:odoo/odoo.git
 
 # 3. Set the correct bare-repo fetch refspec
-git -C ~/Odoo/.vault/odoo.git config remote.origin.fetch "+refs/heads/*:refs/heads/*"
+git -C ~/Odoo/.vault/odoo.git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
 
 # 4. Fetch only what's missing
-git -C ~/Odoo/.vault/odoo.git fetch --all --prune
+git -C ~/Odoo/.vault/odoo.git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
 ```
 
 > **Disk space:** The donor approach has the same final footprint as a direct
@@ -80,10 +80,10 @@ git -C ~/Odoo/.vault/odoo.git fetch --all --prune
 > the script will offer to do this automatically.
 
 > **Common mistake:** Do not configure the fetch refspec as
-> `+refs/heads/*:refs/remotes/origin/*` (the non-bare convention). This creates two
-> conflicting sets of refs — branches from the donor land in `refs/heads/*` while
-> GitHub fetches land in `refs/remotes/origin/*`, causing worktrees to silently use
-> stale data.
+> `+refs/heads/*:refs/heads/*`. When a branch is checked out in a worktree (e.g.
+> `18.0`), Git refuses to fetch into it — even when you are creating a completely
+> different version. Always use `refs/remotes/origin/*` as the destination so fetched
+> refs never conflict with checked-out worktrees.
 
 ---
 

@@ -167,9 +167,9 @@ clone_vault() {
             echo -e "  Cloning ${BOLD}${name}${NC} from local donor..."
             git clone --bare --local "$donor" "$dest"
             git -C "$dest" remote set-url origin "$url"
-            git -C "$dest" config remote.origin.fetch "+refs/heads/*:refs/heads/*"
+            git -C "$dest" config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
             echo -e "  Fetching updates for ${BOLD}${name}${NC} from GitHub..."
-            git -C "$dest" fetch --all --prune
+            git -C "$dest" fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
             print_ok ".vault/${name}.git (from donor)"
             USED_DONORS+=("$donor")
         else

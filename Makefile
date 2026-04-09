@@ -245,7 +245,7 @@ fetch-all: ## Fetch latest refs for all vault repos (odoo, enterprise, design-th
 	@echo ""
 	@for repo in odoo enterprise design-themes; do \
 		echo "  Fetching $$repo..."; \
-		git -C $(ODOO_VAULT_PATH)/$$repo.git fetch --prune origin; \
+		git -C $(ODOO_VAULT_PATH)/$$repo.git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'; \
 	done
 	@echo ""
 
