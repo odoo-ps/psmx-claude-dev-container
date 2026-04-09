@@ -7,10 +7,12 @@ set -euo pipefail
 # Add or remove Odoo source worktrees (odoo, enterprise, design-themes).
 #
 # Usage:
-#   bash worktree.sh              ← interactive menu
-#   bash worktree.sh add 18.0     ← non-interactive add
-#   bash worktree.sh add saas-18.4
-#   bash worktree.sh remove 18.0  ← non-interactive remove
+#   make worktree                        ← interactive menu
+#   make worktree-add VERSION=18.0       ← non-interactive add
+#   make worktree-add VERSION=saas-18.4
+#   make worktree-remove VERSION=18.0    ← non-interactive remove
+#
+#   (or invoke directly: bash worktree.sh [add|remove] [version])
 # =============================================================================
 
 # --- Colors ------------------------------------------------------------------
@@ -241,7 +243,7 @@ main() {
             remove) cmd_remove "$version" ;;
             *)
                 echo -e "${RED}Unknown command: $cmd${NC}"
-                echo -e "Usage: bash worktree.sh [add|remove] [version]"
+                echo -e "Usage: make worktree-add VERSION=<version> | make worktree-remove VERSION=<version>"
                 exit 1
                 ;;
         esac

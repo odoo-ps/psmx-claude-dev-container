@@ -141,8 +141,8 @@ cd ~/Odoo/Customers/acme
 #    ODOO_TARGET_VERSION=18.0   ← target version
 
 # 2. Ensure worktrees exist for both versions
-bash worktree.sh add 17.0
-bash worktree.sh add 18.0
+make worktree-add VERSION=17.0
+make worktree-add VERSION=18.0
 
 # 3. Build the image for the target version (if not already built)
 make build

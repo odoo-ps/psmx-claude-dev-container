@@ -31,6 +31,9 @@ make test-file file=/path/to/test.py     Run tests from a specific file
 make pgadmin                             Start pgAdmin4 at http://localhost:5050
 make list                                List all client environments and their running status
 make list-worktrees                      List available worktrees (active one highlighted)
+make worktree                            Open the interactive worktree manager
+make worktree-add VERSION=19.0           Add a worktree for the given version
+make worktree-remove VERSION=17.0        Remove a worktree for the given version
 make fetch-all                           Fetch latest refs for all vault repos
 make destroy                             Remove all containers, networks and volumes (deletes the database)
 ```
@@ -89,24 +92,15 @@ git -C ~/Odoo/.vault/odoo.git fetch origin '+refs/heads/*:refs/remotes/origin/*'
 
 ## Managing worktrees
 
-Use `worktree.sh` to add or remove Odoo source worktrees after the initial setup.
-This is the recommended way to add new versions — including `saas-*` branches —
-without re-running the full `setup.sh`.
-
-**Interactive mode**
+Use `make worktree-add` / `make worktree-remove` to add or remove Odoo source
+worktrees after the initial setup. This is the recommended way to add new versions —
+including `saas-*` branches — without re-running `setup.sh`.
 
 ```bash
-bash worktree.sh
-```
-
-Presents a menu to add or remove a worktree.
-
-**Non-interactive mode**
-
-```bash
-bash worktree.sh add 18.0
-bash worktree.sh add saas-18.4
-bash worktree.sh remove 17.0
+make worktree-add VERSION=19.0
+make worktree-add VERSION=saas-18.4
+make worktree-remove VERSION=17.0
+make worktree                        # interactive menu
 ```
 
 The script fetches the latest refs from the vault before creating a worktree, copies

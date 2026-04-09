@@ -18,7 +18,7 @@ ODOO_CONF     := /etc/odoo/odoo.conf
 BUILD_VERSION := $(ODOO_VERSION)
 endif
 
-.PHONY: start stop restart restart-all logs shell psql ps init restore update test test-tags test-file build destroy fetch-all check-env check-image check-ports check-worktrees list list-worktrees help
+.PHONY: start stop restart restart-all logs shell psql ps init restore update test test-tags test-file build destroy fetch-all worktree worktree-add worktree-remove check-env check-image check-ports check-worktrees list list-worktrees help
 
 check-env:
 	@ok=1; \
@@ -95,7 +95,7 @@ check-worktrees:
 		if [ ! -d "$$_target" ]; then \
 			echo ""; \
 			echo "  \033[31mError: worktree not found for ODOO_TARGET_VERSION=$(ODOO_TARGET_VERSION)\033[0m"; \
-			echo "  Run: bash worktree.sh add $(ODOO_TARGET_VERSION)"; \
+			echo "  Run: make worktree-add VERSION=$(ODOO_TARGET_VERSION)"; \
 			echo ""; \
 			exit 1; \
 		fi; \
@@ -103,7 +103,7 @@ check-worktrees:
 		if [ ! -d "$$_source" ]; then \
 			echo ""; \
 			echo "  \033[31mError: worktree not found for ODOO_SOURCE_VERSION=$(ODOO_SOURCE_VERSION)\033[0m"; \
-			echo "  Run: bash worktree.sh add $(ODOO_SOURCE_VERSION)"; \
+			echo "  Run: make worktree-add VERSION=$(ODOO_SOURCE_VERSION)"; \
 			echo ""; \
 			exit 1; \
 		fi; \
@@ -112,7 +112,7 @@ check-worktrees:
 		if [ ! -d "$$_version" ]; then \
 			echo ""; \
 			echo "  \033[31mError: worktree not found for ODOO_VERSION=$(ODOO_VERSION)\033[0m"; \
-			echo "  Run: bash worktree.sh add $(ODOO_VERSION)"; \
+			echo "  Run: make worktree-add VERSION=$(ODOO_VERSION)"; \
 			echo ""; \
 			exit 1; \
 		fi; \
@@ -240,6 +240,16 @@ destroy: stop ## Remove all containers, networks and volumes (deletes the databa
 		&& docker compose $(COMPOSE_FILES) down -v \
 		|| echo "Aborted."
 	@echo ""
+
+worktree: ## Open the interactive worktree manager (add or remove)
+	@bash worktree.sh
+
+worktree-add: ## Add a worktree — usage: make worktree-add VERSION=19.0
+	@bash worktree.sh add $(VERSION)
+
+worktree-remove: ## Remove a worktree — usage: make worktree-remove VERSION=17.0
+	@bash worktree.sh remove $(VERSION)
+
 
 fetch-all: ## Fetch latest refs for all vault repos (odoo, enterprise, design-themes)
 	@echo ""
