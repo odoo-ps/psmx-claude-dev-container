@@ -1,4 +1,4 @@
-include .env
+-include .env
 export
 
 ODOO_MODE ?= development
@@ -21,6 +21,13 @@ endif
 .PHONY: start stop restart restart-all logs shell psql ps init restore update test test-tags test-file build destroy fetch-all worktree worktree-add worktree-remove check-env check-image check-ports check-worktrees list list-worktrees help
 
 check-env:
+	@if [ ! -f .env ]; then \
+		echo ""; \
+		echo "  \033[31mError: .env not found.\033[0m"; \
+		echo "  Copy .env.example to .env and configure it before running this command."; \
+		echo ""; \
+		exit 1; \
+	fi
 	@ok=1; \
 	_fail() { printf "  \033[31mError: %s is not set in .env\033[0m\n" "$$1"; ok=0; }; \
 	[ -n "$(ODOO_DB_NAME)" ]        || _fail ODOO_DB_NAME; \
@@ -125,29 +132,29 @@ start: check-env check-worktrees check-image check-ports ## Start the environmen
 	@echo "  Run 'make logs' in a new terminal to follow the Odoo startup."
 	@echo ""
 
-stop: ## Stop the environment
+stop: check-env ## Stop the environment
 	docker compose $(COMPOSE_FILES) --profile pgadmin down
 
-restart: ## Restart the Odoo server (keeps the database running)
+restart: check-env ## Restart the Odoo server (keeps the database running)
 	docker compose $(COMPOSE_FILES) restart web
 
 restart-all: stop start ## Restart the entire stack (Odoo + database)
 
-logs: ## Stream Odoo server logs
+logs: check-env ## Stream Odoo server logs
 	docker compose $(COMPOSE_FILES) logs -f web
 
-shell: ## Open an Odoo ORM shell (Python REPL with env pre-loaded)
+shell: check-env ## Open an Odoo ORM shell (Python REPL with env pre-loaded)
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) shell \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME)
 
-psql: ## Open a psql shell against the active database
+psql: check-env ## Open a psql shell against the active database
 	docker compose $(COMPOSE_FILES) exec db psql -U odoo -d $(ODOO_DB_NAME)
 
-ps: ## Show container status
+ps: check-env ## Show container status
 	docker compose $(COMPOSE_FILES) ps
 
-pgadmin: ## Start pgAdmin4 at http://localhost:5050
+pgadmin: check-env ## Start pgAdmin4 at http://localhost:5050
 	@echo ""
 	@echo "  Waiting for pgAdmin to be ready..."
 	@docker compose $(COMPOSE_FILES) --profile pgadmin up -d --wait \
@@ -155,7 +162,7 @@ pgadmin: ## Start pgAdmin4 at http://localhost:5050
 		|| true
 	@echo ""
 
-reset: check-worktrees ## Reset the database: drop, recreate, and install base module
+reset: check-env check-worktrees ## Reset the database: drop, recreate, and install base module
 	@echo ""
 	@echo "  \033[33mWARNING\033[0m: This will drop and recreate the database '$(ODOO_DB_NAME)'."
 	@echo ""
@@ -199,7 +206,7 @@ reset: check-worktrees ## Reset the database: drop, recreate, and install base m
 	@echo "  \033[32m✓ Database initialized. Run 'make start' to launch Odoo.\033[0m"
 	@echo ""
 
-restore: ## Restore a database. Usage: make restore dump=file.dump
+restore: check-env ## Restore a database. Usage: make restore dump=file.dump
 	./restore.sh dumps/$(dump)
 
 update: check-worktrees ## Update Odoo modules. Usage: make update modules=mod1,mod2
@@ -231,7 +238,7 @@ test-file: check-worktrees ## Run tests from a file. Usage: make test-file file=
 		--test-file $(file) \
 		--stop-after-init
 
-destroy: stop ## Remove all containers, networks and volumes (deletes the database)
+destroy: check-env stop ## Remove all containers, networks and volumes (deletes the database)
 	@echo ""
 	@echo "  \033[33mWARNING\033[0m: This will remove all containers, networks and volumes."
 	@echo "  The database '$(ODOO_DB_NAME)' will be permanently deleted."
@@ -251,7 +258,7 @@ worktree-remove: ## Remove a worktree — usage: make worktree-remove VERSION=17
 	@bash worktree.sh remove $(VERSION)
 
 
-fetch-all: ## Fetch latest refs for all vault repos (odoo, enterprise, design-themes)
+fetch-all: check-env ## Fetch latest refs for all vault repos (odoo, enterprise, design-themes)
 	@echo ""
 	@for repo in odoo enterprise design-themes; do \
 		echo "  Fetching $$repo..."; \
@@ -259,12 +266,12 @@ fetch-all: ## Fetch latest refs for all vault repos (odoo, enterprise, design-th
 	done
 	@echo ""
 
-build: ## Build the Docker image for the active version
+build: check-env ## Build the Docker image for the active version
 	docker build \
 		-t odoo-dev:$(BUILD_VERSION) \
 		$(ODOO_WORKTREE_PATH)/$(BUILD_VERSION)
 
-list: ## List all client environments and their running status
+list: check-env ## List all client environments and their running status
 	@_base="$(CUSTOMERS_PATH)"; \
 	echo ""; \
 	if [ ! -d "$$_base" ]; then \
@@ -291,7 +298,7 @@ list: ## List all client environments and their running status
 	[ "$$found" = "1" ] || echo "  No clients found."; \
 	echo ""
 
-list-worktrees: ## List all available worktrees
+list-worktrees: check-env ## List all available worktrees
 	@_path=$$(eval echo "$(ODOO_WORKTREE_PATH)"); \
 	echo ""; \
 	echo "  Available worktrees in $$_path:"; \
