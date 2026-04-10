@@ -15,29 +15,17 @@ set -euo pipefail
 #   (or invoke directly: bash worktree.sh [add|remove] [version])
 # =============================================================================
 
-# --- Colors ------------------------------------------------------------------
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m'
-
 # --- Paths -------------------------------------------------------------------
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ODOO_BASE=~/Odoo
 VAULT_DIR="$ODOO_BASE/.vault"
 WORKTREES_DIR="$ODOO_BASE/Worktrees"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOCKERFILES_DIR="$SCRIPT_DIR/dockerfiles"
 
 REPOS=(odoo enterprise design-themes)
 
 # --- Helpers -----------------------------------------------------------------
-print_ok()    { echo -e "  ${GREEN}✓${NC} $1"; }
-print_skip()  { echo -e "  ${YELLOW}→${NC} $1 (already exists, skipping)"; }
-print_error() { echo -e "  ${RED}✗${NC} $1"; }
-print_info()  { echo -e "  ${BLUE}•${NC} $1"; }
+source "$SCRIPT_DIR/lib/helpers.sh"
 
 print_header() {
     echo ""
@@ -45,18 +33,6 @@ print_header() {
     echo -e "${BOLD}${BLUE}  Odoo Dev Environment — Worktree Manager${NC}"
     echo -e "${BOLD}${BLUE}============================================${NC}"
     echo ""
-}
-
-is_legacy() {
-    local version="$1"
-    local major
-    if [[ "$version" == saas-* ]]; then
-        # Extract major from saas-X.Y → X
-        major=$(echo "$version" | sed 's/saas-\([0-9]*\)\..*/\1/')
-    else
-        major=$(echo "$version" | cut -d'.' -f1)
-    fi
-    [[ "$major" -lt 18 ]]
 }
 
 validate_version() {

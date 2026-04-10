@@ -12,16 +12,8 @@ set -euo pipefail
 # Safe to re-run: existing directories and repos are skipped.
 # =============================================================================
 
-# --- Colors ------------------------------------------------------------------
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m'
-
 # --- Paths -------------------------------------------------------------------
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ODOO_BASE=~/Odoo
 VAULT_DIR="$ODOO_BASE/.vault"
 WORKTREES_DIR="$ODOO_BASE/Worktrees"
@@ -29,8 +21,10 @@ CUSTOMERS_DIR="$ODOO_BASE/Customers"
 REPOS_DIR="$ODOO_BASE/Repos"
 DUMPS_DIR="$ODOO_BASE/Dumps"
 UPGRADE_DIR="$ODOO_BASE/Upgrade"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOCKERFILES_DIR="$SCRIPT_DIR/dockerfiles"
+
+# --- Helpers -----------------------------------------------------------------
+source "$SCRIPT_DIR/lib/helpers.sh"
 
 # --- Repos -------------------------------------------------------------------
 ODOO_REPO="git@github.com:odoo/odoo.git"
@@ -44,42 +38,12 @@ LEGACY_VERSIONS=("16.0" "17.0")
 MODERN_VERSIONS=("18.0" "19.0")
 ALL_VERSIONS=("${LEGACY_VERSIONS[@]}" "${MODERN_VERSIONS[@]}")
 
-# --- Helpers -----------------------------------------------------------------
 print_header() {
     echo ""
     echo -e "${BOLD}${BLUE}============================================${NC}"
     echo -e "${BOLD}${BLUE}  Odoo Dev Environment — Machine Setup${NC}"
     echo -e "${BOLD}${BLUE}============================================${NC}"
     echo ""
-}
-
-print_section() { echo -e "\n${BOLD}${CYAN}▸ $1${NC}"; }
-print_ok()      { echo -e "  ${GREEN}✓${NC} $1"; }
-print_skip()    { echo -e "  ${YELLOW}→${NC} $1 (already exists, skipping)"; }
-print_error()   { echo -e "  ${RED}✗${NC} $1"; }
-print_info()    { echo -e "  ${BLUE}•${NC} $1"; }
-
-run_with_spinner() {
-    local label="$1"; shift
-    local tmpfile; tmpfile=$(mktemp)
-    "$@" >"$tmpfile" 2>&1 &
-    local pid=$! i=0
-    local chars='|/-\'
-    while kill -0 "$pid" 2>/dev/null; do
-        printf "\r  %s %s" "${chars:$((i % 4)):1}" "$label"
-        sleep 0.1
-        i=$((i + 1))
-    done
-    wait "$pid"; local code=$?
-    printf "\r%-70s\r" ""
-    [ "$code" -ne 0 ] && cat "$tmpfile" >&2
-    rm -f "$tmpfile"
-    return "$code"
-}
-
-is_legacy() {
-    local version="$1"
-    [[ "$version" == "16.0" || "$version" == "17.0" ]]
 }
 
 # --- 1. Prerequisites --------------------------------------------------------
