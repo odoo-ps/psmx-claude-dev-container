@@ -245,7 +245,7 @@ destroy: check-env stop ## Remove all containers, networks and volumes (deletes 
 	@echo "  The database '$(ODOO_DB_NAME)' will be permanently deleted."
 	@echo ""
 	@read -p "  Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ] \
-		&& docker compose $(COMPOSE_FILES) down -v \
+		&& docker compose $(COMPOSE_FILES) --profile pgadmin down -v \
 		|| echo "Aborted."
 	@echo ""
 

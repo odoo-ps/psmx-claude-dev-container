@@ -147,8 +147,9 @@ Then use the **Docker: Odoo Debug** launch configuration to attach the debugger.
 > between the Python and Debugpy extensions.
 
 > **Running multiple clients simultaneously?**
-> Change `ODOO_PORT` and `ODOO_DEBUG_PORT` in each client's `.env` to avoid
-> port conflicts (e.g. `8069`/`5678` for one, `8070`/`5679` for another).
+> Change `ODOO_PORT`, `ODOO_DEBUG_PORT`, and `PGADMIN_PORT` in each client's
+> `.env` to avoid port conflicts (e.g. `8069`/`5678`/`5050` for one,
+> `8070`/`5679`/`5051` for another).
 > Each VS Code window connects to its own container independently.
 
 ---
