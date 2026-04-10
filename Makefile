@@ -22,7 +22,7 @@ ODOO_CONF     := /etc/odoo/odoo.conf
 BUILD_VERSION := $(ODOO_VERSION)
 endif
 
-.PHONY: start stop restart restart-all logs shell psql ps init restore update test test-tags test-file build destroy fetch-all worktree worktree-add worktree-remove check-env check-image check-ports check-worktrees list list-worktrees workspace help
+.PHONY: start stop restart restart-all logs shell psql ps init restore update test test-tags test-file build destroy pull-all worktree worktree-add worktree-remove check-env check-image check-ports check-worktrees list list-worktrees workspace help
 
 check-env:
 	@if [ ! -f .env ]; then \
@@ -249,7 +249,7 @@ destroy: check-env stop ## Remove all containers, networks and volumes (deletes 
 		|| echo "Aborted."
 	@echo ""
 
-workspace: check-env ## Generate odoo-dev.code-workspace for the active ODOO_MODE
+workspace: check-env
 	@cp workspace/$(ODOO_MODE).json odoo-dev.code-workspace
 	@echo ""
 	@echo "  \033[32m✓ odoo-dev.code-workspace updated (mode: $(ODOO_MODE))\033[0m"
@@ -265,13 +265,42 @@ worktree-remove: ## Remove a worktree — usage: make worktree-remove VERSION=17
 	@bash worktree.sh remove $(VERSION)
 
 
-fetch-all: check-env ## Fetch latest refs for all vault repos (odoo, enterprise, design-themes)
+pull-all: ## Update all worktrees to the latest commit on their origin branch
+	@echo ""
+	@echo "  Fetching from origin..."
 	@echo ""
 	@for repo in odoo enterprise design-themes; do \
-		echo "  Fetching $$repo..."; \
-		git -C $(ODOO_VAULT_PATH)/$$repo.git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'; \
+		printf "  \033[1m%-20s\033[0m" "$$repo"; \
+		git -C "$$(eval echo "$(ODOO_VAULT_PATH)")/$$repo.git" fetch --prune origin \
+			'+refs/heads/*:refs/remotes/origin/*' > /dev/null 2>&1 \
+			&& printf "\033[32m✓ fetched\033[0m\n" \
+			|| { printf "\033[31m✗ fetch failed — check SSH access to GitHub\033[0m\n"; exit 1; }; \
 	done
 	@echo ""
+	@echo "  Updating worktrees..."
+	@echo ""
+	@_path=$$(eval echo "$(ODOO_WORKTREE_PATH)"); \
+	if [ ! -d "$$_path" ]; then \
+		echo "  \033[31mNo worktrees found in $$_path\033[0m"; \
+		echo ""; \
+		exit 0; \
+	fi; \
+	found=0; \
+	for version_dir in "$$_path"/*/; do \
+		[ -d "$$version_dir" ] || continue; \
+		found=1; \
+		version=$$(basename "$$version_dir"); \
+		printf "  \033[1m%s\033[0m\n" "$$version"; \
+		for repo in odoo enterprise design-themes; do \
+			dest="$$_path/$$version/$$repo"; \
+			[ -d "$$dest" ] || continue; \
+			git -C "$$dest" reset --hard "origin/$$version" > /dev/null 2>&1 \
+				&& printf "  \033[32m✓\033[0m %s\n" "$$repo" \
+				|| printf "  \033[31m✗\033[0m %s (failed — check if origin/$$version exists)\n" "$$repo"; \
+		done; \
+		echo ""; \
+	done; \
+	[ "$$found" = "1" ] || { echo "  No worktrees found."; echo ""; }
 
 build: check-env ## Build the Docker image for the active version
 	docker build \
@@ -344,5 +373,8 @@ help: ## Show this help message
 	@echo "Examples:"
 	@echo "  make restore dump=client_prod.dump"
 	@echo "  make update modules=sale,account"
+	@echo "  make test modules=sale,account"
+	@echo "  make test-tags tags=/sale:TestSale.test_method"
+	@echo "  make worktree-add VERSION=18.0"
 	@echo "  make build"
 	@echo ""

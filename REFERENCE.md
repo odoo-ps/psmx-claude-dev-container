@@ -34,7 +34,7 @@ make list-worktrees                      List available worktrees (active one hi
 make worktree                            Open the interactive worktree manager
 make worktree-add VERSION=19.0           Add a worktree for the given version
 make worktree-remove VERSION=17.0        Remove a worktree for the given version
-make fetch-all                           Fetch latest refs for all vault repos
+make pull-all                            Update all worktrees to the latest commit on their origin branch
 make destroy                             Remove all containers, networks and volumes (deletes the database)
 ```
 
