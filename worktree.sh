@@ -187,7 +187,13 @@ cmd_remove() {
     for repo in "${REPOS[@]}"; do
         local dest="$WORKTREES_DIR/$version/$repo"
         if [[ -d "$dest" ]]; then
-            git -C "$VAULT_DIR/${repo}.git" worktree remove --force "$dest"
+            # Deregister from git — ignore errors (may already be deregistered
+            # if a previous run failed mid-way). --force bypasses dirty-file
+            # protection but does NOT handle untracked files, so we always
+            # fall back to rm -rf below.
+            git -C "$VAULT_DIR/${repo}.git" worktree remove --force "$dest" 2>/dev/null || true
+            git -C "$VAULT_DIR/${repo}.git" worktree prune
+            rm -rf "$dest"
             print_ok "removed Worktrees/$version/$repo"
         else
             print_skip "Worktrees/$version/$repo (not found)"
