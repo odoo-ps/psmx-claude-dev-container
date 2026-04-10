@@ -1,68 +1,69 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Load environment variables from .env
-if [ -f .env ]; then
-  export $(cat .env | grep -v '#' | awk '/=/ {print $1}')
-else
-  echo "Error: .env file not found"
-  exit 1
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/helpers.sh"
+
+# --- Load .env ---------------------------------------------------------------
+if [ ! -f .env ]; then
+    print_error ".env not found — copy .env.example to .env and configure it"
+    exit 1
 fi
+set -a; source .env; set +a
 
-FILE=$1
+ODOO_MODE="${ODOO_MODE:-development}"
+COMPOSE_FILES=(-f docker-compose.yml -f "docker-compose.${ODOO_MODE}.yml")
+
+# --- Validate argument -------------------------------------------------------
+FILE="${1:-}"
 
 if [ -z "$FILE" ]; then
-  echo "Usage: ./restore.sh dumps/<filename>.dump|.sql"
-  exit 1
+    print_error "Usage: make restore dump=<filename>.dump|.sql"
+    exit 1
 fi
 
-echo "1. Stopping Odoo web service..."
-docker compose stop web >/dev/null 2>&1
+if [[ "$FILE" != *.dump ]] && [[ "$FILE" != *.sql ]]; then
+    print_error "Unsupported format '${FILE}'. Use a .dump or .sql file."
+    exit 1
+fi
 
-echo "2. Starting database service..."
-docker compose up -d --wait db >/dev/null 2>&1
+# --- Restore -----------------------------------------------------------------
+print_info "Stopping Odoo web service..."
+docker compose "${COMPOSE_FILES[@]}" stop web >/dev/null 2>&1
 
-echo "3. Dropping existing database ($ODOO_DB_NAME)..."
-docker compose exec db dropdb -U odoo --if-exists $ODOO_DB_NAME >/dev/null 2>&1
+print_info "Starting database service..."
+docker compose "${COMPOSE_FILES[@]}" up -d --wait db >/dev/null 2>&1
 
-echo "4. Creating fresh database ($ODOO_DB_NAME)..."
-docker compose exec db createdb -U odoo $ODOO_DB_NAME >/dev/null 2>&1
+print_info "Dropping existing database ($ODOO_DB_NAME)..."
+docker compose "${COMPOSE_FILES[@]}" exec db dropdb -U odoo --if-exists "$ODOO_DB_NAME" >/dev/null 2>&1
 
-echo "5. Restoring $FILE..."
+print_info "Creating fresh database ($ODOO_DB_NAME)..."
+docker compose "${COMPOSE_FILES[@]}" exec db createdb -U odoo "$ODOO_DB_NAME" >/dev/null 2>&1
 
-# Run restore in the background to show a progress spinner
-if [[ $FILE == *.dump ]]; then
-  docker compose exec db pg_restore -U odoo -d $ODOO_DB_NAME -1 /$FILE >/dev/null 2>&1 &
-elif [[ $FILE == *.sql ]]; then
-  docker compose exec db psql -U odoo -d $ODOO_DB_NAME -f /$FILE -q >/dev/null 2>&1 &
+if [[ "$FILE" == *.dump ]]; then
+    run_with_spinner "Restoring ${FILE}..." \
+        docker compose "${COMPOSE_FILES[@]}" exec -T db \
+            pg_restore -U odoo -d "$ODOO_DB_NAME" -1 "/$FILE" \
+        || { print_error "Restore failed — check the dump file."; exit 1; }
 else
-  echo "Error: unsupported format. Use a .dump or .sql file."
-  exit 1
+    run_with_spinner "Restoring ${FILE}..." \
+        docker compose "${COMPOSE_FILES[@]}" exec -T db \
+            psql -U odoo -d "$ODOO_DB_NAME" -f "/$FILE" -q \
+        || { print_error "Restore failed — check the dump file."; exit 1; }
 fi
 
-# Spinner while restore runs
-PID=$!
-spin='-\|/'
-i=0
-while kill -0 $PID 2>/dev/null; do
-  i=$(((i + 1) % 4))
-  printf "\r   Restoring database... [${spin:$i:1}] "
-  sleep 0.1
-done
+print_info "Resetting admin credentials (login: admin / password: admin)..."
+SQL="WITH admin_info AS (
+    SELECT res_id AS id FROM ir_model_data
+    WHERE name = 'user_admin' AND module = 'base'
+)
+UPDATE res_users SET password = 'admin', login = 'admin'
+FROM admin_info WHERE id = res_users.id;"
+docker compose "${COMPOSE_FILES[@]}" exec db psql -U odoo -d "$ODOO_DB_NAME" -c "$SQL" -q >/dev/null 2>&1
 
-# Check restore exit code
-wait $PID
-if [ $? -ne 0 ]; then
-  printf "\r   Restore failed. Please check the dump file.        \n"
-  exit 1
-fi
+print_info "Starting Odoo..."
+docker compose "${COMPOSE_FILES[@]}" start web >/dev/null 2>&1
 
-printf "\r   Database restored successfully.                    \n"
-
-echo "6. Resetting admin credentials (login: admin / password: admin)..."
-SQL_QUERY="WITH admin_info AS(SELECT res_id AS id FROM ir_model_data WHERE name = 'user_admin' AND module = 'base') UPDATE res_users ru SET password='admin', login='admin' FROM admin_info i WHERE ru.id=i.id;"
-docker compose exec db psql -U odoo -d $ODOO_DB_NAME -c "$SQL_QUERY" -q >/dev/null 2>&1
-
-echo "7. Starting Odoo..."
-docker compose start web >/dev/null 2>&1
-
-echo "Done. Database is ready — log in at http://localhost:${ODOO_PORT:-8069}"
+echo ""
+print_ok "Database restored — log in at http://localhost:${ODOO_PORT:-8069}"
+echo ""
