@@ -1,8 +1,12 @@
 -include .env
 export
 
-ODOO_MODE ?= development
-CUSTOMERS_PATH ?= $(HOME)/Odoo/Customers
+ODOO_MODE          ?= development
+CUSTOMERS_PATH     ?= $(HOME)/Odoo/Customers
+ODOO_VAULT_PATH    ?= $(HOME)/Odoo/.vault
+ODOO_WORKTREE_PATH ?= $(HOME)/Odoo/Worktrees
+ODOO_UPGRADE_PATH  ?= $(HOME)/Odoo/Upgrade
+DUMPS_PATH         ?= $(HOME)/Odoo/Dumps
 
 # Compose files — base + mode-specific override
 COMPOSE_FILES := -f docker-compose.yml -f docker-compose.$(ODOO_MODE).yml
@@ -30,11 +34,8 @@ check-env:
 	fi
 	@ok=1; \
 	_fail() { printf "  \033[31mError: %s is not set in .env\033[0m\n" "$$1"; ok=0; }; \
-	[ -n "$(ODOO_DB_NAME)" ]        || _fail ODOO_DB_NAME; \
-	[ -n "$(CUSTOMER_REPO)" ]       || _fail CUSTOMER_REPO; \
-	[ -n "$(ODOO_UPGRADE_PATH)" ]   || _fail ODOO_UPGRADE_PATH; \
-	[ -n "$(ODOO_VAULT_PATH)" ]     || _fail ODOO_VAULT_PATH; \
-	[ -n "$(ODOO_WORKTREE_PATH)" ]  || _fail ODOO_WORKTREE_PATH; \
+	[ -n "$(ODOO_DB_NAME)" ]   || _fail ODOO_DB_NAME; \
+	[ -n "$(CUSTOMER_REPO)" ]  || _fail CUSTOMER_REPO; \
 	if [ "$(ODOO_MODE)" = "upgrade" ]; then \
 		[ -n "$(ODOO_SOURCE_VERSION)" ] || _fail ODOO_SOURCE_VERSION; \
 		[ -n "$(ODOO_TARGET_VERSION)" ] || _fail ODOO_TARGET_VERSION; \
@@ -298,7 +299,7 @@ list: check-env ## List all client environments and their running status
 	[ "$$found" = "1" ] || echo "  No clients found."; \
 	echo ""
 
-list-worktrees: check-env ## List all available worktrees
+list-worktrees: ## List all available worktrees
 	@_path=$$(eval echo "$(ODOO_WORKTREE_PATH)"); \
 	echo ""; \
 	echo "  Available worktrees in $$_path:"; \
