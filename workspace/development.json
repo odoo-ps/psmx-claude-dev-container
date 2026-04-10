@@ -5,6 +5,10 @@
             "name": "Odoo source (reference)"
         },
         {
+            "path": "/mnt/upgrade/upgrade-util",
+            "name": "Upgrade util"
+        },
+        {
             "path": "/mnt/extra-addons",
             "name": "Custom Developments"
         }
@@ -14,6 +18,7 @@
             "/mnt/reference/odoo",
             "/mnt/reference/enterprise",
             "/mnt/reference/design-themes",
+            "/mnt/upgrade/upgrade-util/src",
             "/mnt/extra-addons"
         ],
         "files.exclude": {
