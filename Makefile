@@ -22,7 +22,7 @@ ODOO_CONF     := /etc/odoo/odoo.conf
 BUILD_VERSION := $(ODOO_VERSION)
 endif
 
-.PHONY: start stop restart restart-all logs shell psql ps init restore update test test-tags test-file build destroy fetch-all worktree worktree-add worktree-remove check-env check-image check-ports check-worktrees list list-worktrees help
+.PHONY: start stop restart restart-all logs shell psql ps init restore update test test-tags test-file build destroy fetch-all worktree worktree-add worktree-remove check-env check-image check-ports check-worktrees list list-worktrees workspace help
 
 check-env:
 	@if [ ! -f .env ]; then \
@@ -126,7 +126,7 @@ check-worktrees:
 		fi; \
 	fi
 
-start: check-env check-worktrees check-image check-ports ## Start the environment
+start: check-env check-worktrees check-image check-ports workspace ## Start the environment
 	docker compose $(COMPOSE_FILES) up -d
 	@echo ""
 	@echo "  \033[32m✓ Environment started → http://localhost:$${ODOO_PORT:-8069}\033[0m"
@@ -247,6 +247,12 @@ destroy: check-env stop ## Remove all containers, networks and volumes (deletes 
 	@read -p "  Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ] \
 		&& docker compose $(COMPOSE_FILES) down -v \
 		|| echo "Aborted."
+	@echo ""
+
+workspace: check-env ## Generate odoo-dev.code-workspace for the active ODOO_MODE
+	@cp workspace/$(ODOO_MODE).json odoo-dev.code-workspace
+	@echo ""
+	@echo "  \033[32m✓ odoo-dev.code-workspace updated (mode: $(ODOO_MODE))\033[0m"
 	@echo ""
 
 worktree: ## Open the interactive worktree manager (add or remove)

@@ -46,7 +46,7 @@ Run `setup.sh` once per machine to create the directory structure, clone the vau
 repositories, and create the initial worktrees.
 
 ```bash
-bash setup.sh
+./setup.sh
 ```
 
 The script is safe to re-run — existing directories and repos are skipped.

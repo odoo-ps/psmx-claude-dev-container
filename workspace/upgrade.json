@@ -1,0 +1,55 @@
+{
+    "folders": [
+        {
+            "path": "/opt/odoo-src",
+            "name": "Odoo source (upgrade target)"
+        },
+        {
+            "path": "/mnt/reference",
+            "name": "Odoo source (reference)"
+        },
+        {
+            "path": "/mnt/upgrade/upgrade-util",
+            "name": "Upgrade util"
+        },
+        {
+            "path": "/mnt/upgrade/upgrade",
+            "name": "Upgrade scripts (private)"
+        },
+        {
+            "path": "/mnt/extra-addons",
+            "name": "Custom Developments"
+        }
+    ],
+    "settings": {
+        "python.analysis.extraPaths": [
+            "/opt/odoo-src/odoo",
+            "/opt/odoo-src/enterprise",
+            "/opt/odoo-src/design-themes",
+            "/mnt/reference/odoo",
+            "/mnt/reference/enterprise",
+            "/mnt/reference/design-themes",
+            "/mnt/extra-addons",
+            "/mnt/upgrade/upgrade-util/src"
+        ],
+        "files.exclude": {
+            "**/*.pyc": true,
+            "**/__pycache__": true
+        }
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Docker: Odoo Debug",
+                "type": "debugpy",
+                "request": "attach",
+                "connect": {
+                    "host": "localhost",
+                    "port": 5678
+                },
+                "justMyCode": false
+            }
+        ]
+    }
+}

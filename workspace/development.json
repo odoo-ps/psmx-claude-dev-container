@@ -1,26 +1,8 @@
 {
-    // IMPORTANT: This workspace uses paths that exist inside the Docker container.
-    // It will only work after reopening the project with the Dev Containers extension:
-    // "Dev Containers: Reopen in Container" (Cmd+Shift+P)
-    //
-    // Folders cover both ODOO_MODE=development and ODOO_MODE=upgrade.
-    // VS Code silently ignores folders that do not exist in the current mode.
     "folders": [
-        {
-            "path": "/opt/odoo-src",
-            "name": "Odoo source (upgrade target)"
-        },
         {
             "path": "/mnt/reference",
             "name": "Odoo source (reference)"
-        },
-        {
-            "path": "/mnt/upgrade/upgrade-util",
-            "name": "Upgrade util"
-        },
-        {
-            "path": "/mnt/upgrade/upgrade",
-            "name": "Upgrade scripts (private)"
         },
         {
             "path": "/mnt/extra-addons",
@@ -29,14 +11,10 @@
     ],
     "settings": {
         "python.analysis.extraPaths": [
-            "/opt/odoo-src/odoo",
-            "/opt/odoo-src/enterprise",
-            "/opt/odoo-src/design-themes",
             "/mnt/reference/odoo",
             "/mnt/reference/enterprise",
             "/mnt/reference/design-themes",
-            "/mnt/extra-addons",
-            "/mnt/upgrade/upgrade-util/src"
+            "/mnt/extra-addons"
         ],
         "files.exclude": {
             "**/*.pyc": true,

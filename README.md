@@ -25,7 +25,7 @@ you choose, and installs upgrade tools.
 ```bash
 git clone git@github.com:eagf-odoo/odoo-dev-template.git template
 cd template
-bash setup.sh
+./setup.sh
 ```
 
 The script is interactive and safe to re-run — it skips anything that already exists.
