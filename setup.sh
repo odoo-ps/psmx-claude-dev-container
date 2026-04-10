@@ -59,6 +59,24 @@ print_skip()    { echo -e "  ${YELLOW}→${NC} $1 (already exists, skipping)"; }
 print_error()   { echo -e "  ${RED}✗${NC} $1"; }
 print_info()    { echo -e "  ${BLUE}•${NC} $1"; }
 
+run_with_spinner() {
+    local label="$1"; shift
+    local tmpfile; tmpfile=$(mktemp)
+    "$@" >"$tmpfile" 2>&1 &
+    local pid=$! i=0
+    local chars='|/-\'
+    while kill -0 "$pid" 2>/dev/null; do
+        printf "\r  %s %s" "${chars:$((i % 4)):1}" "$label"
+        sleep 0.1
+        i=$((i + 1))
+    done
+    wait "$pid"; local code=$?
+    printf "\r%-70s\r" ""
+    [ "$code" -ne 0 ] && cat "$tmpfile" >&2
+    rm -f "$tmpfile"
+    return "$code"
+}
+
 is_legacy() {
     local version="$1"
     [[ "$version" == "16.0" || "$version" == "17.0" ]]
@@ -168,8 +186,9 @@ clone_vault() {
             git clone --bare --local "$donor" "$dest"
             git -C "$dest" remote set-url origin "$url"
             git -C "$dest" config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-            echo -e "  Fetching updates for ${BOLD}${name}${NC} from GitHub..."
-            git -C "$dest" fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+            run_with_spinner "Fetching updates for ${name} from GitHub..." \
+                git -C "$dest" fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune \
+                || { print_error "fetch failed for ${name} — check your SSH access to GitHub"; exit 1; }
             print_ok ".vault/${name}.git (from donor)"
             USED_DONORS+=("$donor")
         else
