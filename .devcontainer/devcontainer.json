@@ -6,7 +6,7 @@
   "overrideCommand": false,
   "customizations": {
     "vscode": {
-      "extensions": ["ms-python.python", "ms-python.debugpy", "eamodio.gitlens"]
+      "extensions": ["ms-python.python", "eamodio.gitlens"]
     }
   },
   "remoteUser": "odoo"
