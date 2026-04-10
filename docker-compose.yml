@@ -14,9 +14,9 @@ services:
       # Custom modules
       - ${CUSTOMER_REPO}:/mnt/extra-addons
       # Upgrade utilities — expected structure: Upgrade/upgrade-util/ and Upgrade/upgrade/
-      - ${ODOO_UPGRADE_PATH}:/mnt/upgrade:ro
+      - ${ODOO_UPGRADE_PATH:-${HOME}/Odoo/Upgrade}:/mnt/upgrade:ro
       # Vault mounted at the same host path so git worktree symlinks resolve inside the container (required for GitLens)
-      - ${ODOO_VAULT_PATH}:${ODOO_VAULT_PATH}:ro
+      - ${ODOO_VAULT_PATH:-${HOME}/Odoo/.vault}:${ODOO_VAULT_PATH:-${HOME}/Odoo/.vault}:ro
     environment:
       - HOST=db
       - USER=odoo
@@ -34,7 +34,7 @@ services:
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - odoo-db-data:/var/lib/postgresql/data
-      - ${DUMPS_PATH}:/dumps:ro
+      - ${DUMPS_PATH:-${HOME}/Odoo/Dumps}:/dumps:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U odoo"]
       interval: 5s

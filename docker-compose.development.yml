@@ -1,9 +1,9 @@
 services:
   web:
     volumes:
-      - ${ODOO_WORKTREE_PATH}/${ODOO_VERSION}/odoo:/mnt/reference/odoo:ro
-      - ${ODOO_WORKTREE_PATH}/${ODOO_VERSION}/enterprise:/mnt/reference/enterprise:ro
-      - ${ODOO_WORKTREE_PATH}/${ODOO_VERSION}/design-themes:/mnt/reference/design-themes:ro
+      - ${ODOO_WORKTREE_PATH:-${HOME}/Odoo/Worktrees}/${ODOO_VERSION}/odoo:/mnt/reference/odoo:ro
+      - ${ODOO_WORKTREE_PATH:-${HOME}/Odoo/Worktrees}/${ODOO_VERSION}/enterprise:/mnt/reference/enterprise:ro
+      - ${ODOO_WORKTREE_PATH:-${HOME}/Odoo/Worktrees}/${ODOO_VERSION}/design-themes:/mnt/reference/design-themes:ro
     command:
       - sh
       - -c
