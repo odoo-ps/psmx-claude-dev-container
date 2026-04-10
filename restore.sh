@@ -58,7 +58,7 @@ SQL="WITH admin_info AS (
     WHERE name = 'user_admin' AND module = 'base'
 )
 UPDATE res_users SET password = 'admin', login = 'admin'
-FROM admin_info WHERE id = res_users.id;"
+FROM admin_info WHERE admin_info.id = res_users.id;"
 docker compose "${COMPOSE_FILES[@]}" exec db psql -U odoo -d "$ODOO_DB_NAME" -c "$SQL" -q >/dev/null 2>&1
 
 print_info "Starting Odoo..."
