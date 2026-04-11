@@ -14,6 +14,13 @@ Dockerized development environment for Odoo. Designed for custom module developm
 - SSH access to GitHub configured
 - Directory structure created by `setup.sh` (see below)
 
+### Docker Desktop resource settings (Mac)
+
+Go to Settings → Resources and apply:
+- Memory: 10 GB
+- CPUs: 4
+- Swap: 2 GB
+
 ---
 
 ## First-time machine setup

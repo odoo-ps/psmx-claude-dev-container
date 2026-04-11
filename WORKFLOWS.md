@@ -82,6 +82,18 @@ Each window connects to its own container independently.
 | Acme   | http://localhost:8069 | port 5678 |
 | Honex | http://localhost:8070 | port 5679 |
 
+**Hardware requirements for this workflow:**
+
+Each client environment (Odoo + PostgreSQL + VS Code Server) consumes approximately 1.5–2 GB of RAM at rest.
+
+| Use case | RAM |
+|---|---|
+| Single client | 16 GB |
+| Two clients simultaneously | 32 GB (16 GB possible but slow) |
+
+On 16 GB machines the recommended approach is to run one client at a time —
+`make stop` preserves the database, and `make start` resumes in seconds.
+
 ---
 
 ## 3. Updating modules
