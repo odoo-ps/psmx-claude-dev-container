@@ -8,6 +8,12 @@ see [WORKFLOWS.md](WORKFLOWS.md).
 > Throughout this document, `acme` is used as a placeholder company name in examples.
 > Replace it with the actual client name in every command.
 
+> **Note on wkhtmltopdf:** Odoo's Docker images ship wkhtmltopdf pre-configured at
+> the exact version each release requires. On macOS natively, the common workaround
+> is to render reports via Odoo's `/report/html/` route, which produces inconsistent
+> results. Inside the container, wkhtmltopdf runs natively on Linux and renders PDFs
+> directly — matching the behavior of a production server.
+
 ---
 
 ## Available commands
@@ -28,7 +34,7 @@ make update modules=mod1,mod2            Update Odoo modules
 make test modules=mod1,mod2              Update modules and run Odoo test suite.
 make test-tags tags=/mod:Class.method    Run tests matching a tag, class or method
 make test-file file=/path/to/test.py     Run tests from a specific file
-make pgadmin                             Start pgAdmin4 at http://localhost:5050
+make pgadmin                             Start pgAdmin4 at http://localhost:${PGADMIN_PORT:-5050}
 make list                                List all client environments and their running status
 make list-worktrees                      List available worktrees (active one highlighted)
 make worktree                            Open the interactive worktree manager
@@ -231,7 +237,7 @@ started by default — only when explicitly requested.
 
 ```bash
 make pgadmin
-# → http://localhost:5050  (admin@admin.com / admin)
+# → http://localhost:${PGADMIN_PORT:-5050}  (admin@admin.com / admin)
 ```
 
 ### When to use it during an upgrade

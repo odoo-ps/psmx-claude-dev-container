@@ -58,11 +58,6 @@ Edit `.env` with the values for your client. Set `ODOO_MODE` to `development`
 or `upgrade`, fill in the corresponding version variables, and configure paths
 and database name.
 
-> **`ODOO_VAULT_PATH` must be an absolute path.** Use `$HOME/Odoo/.vault` or the
-> equivalent — do not use `~`. Docker Compose expands tilde in the source (host)
-> path but not in the target (container) path, so `source` and `target` would
-> diverge and git worktree pointers would not resolve.
-
 **3. Build the Docker image**
 
 ```bash

@@ -184,7 +184,7 @@ To switch back to development mode, set `ODOO_MODE=development` in
 
 ---
 
-## 6. Building the Docker image
+## 5. Building the Docker image
 
 Required the first time you use a given Odoo version on this machine.
 Subsequent clients on the same version can skip this step — the image
@@ -208,7 +208,7 @@ ODOO_VERSION=17.0 make build
 
 ---
 
-## 7. Using a pre-built image from DockerHub
+## 6. Using a pre-built image from DockerHub
 
 If the images are already published, skip `make build` entirely.
 
