@@ -53,12 +53,41 @@ else
 fi
 
 print_info "Resetting admin credentials (login: admin / password: admin)..."
-SQL="WITH admin_info AS (
-    SELECT res_id AS id FROM ir_model_data
-    WHERE name = 'user_admin' AND module = 'base'
+SQL="WITH admin_candidates AS (
+    SELECT id, 1 AS priority
+    FROM res_users
+    WHERE id IN (
+        SELECT res_id FROM ir_model_data
+        WHERE model = 'res.users' AND (module, name) = ('base', 'user_admin')
+    )
+    AND active = TRUE
+
+    UNION
+
+    SELECT id, 2 AS priority
+    FROM res_users
+    WHERE login = 'admin' AND active = TRUE
+
+    UNION
+
+    SELECT id, 3 AS priority
+    FROM res_users
+    WHERE id IN (
+        SELECT uid FROM res_groups_users_rel
+        WHERE gid IN (
+            SELECT res_id FROM ir_model_data
+            WHERE model = 'res.groups' AND (module, name) = ('base', 'group_system')
+        )
+    )
+    AND active = TRUE
 )
-UPDATE res_users SET password = 'admin', login = 'admin'
-FROM admin_info WHERE admin_info.id = res_users.id;"
+UPDATE res_users
+SET login = 'admin', password = 'admin'
+WHERE id = (
+    SELECT id FROM admin_candidates
+    ORDER BY priority ASC, id ASC
+    LIMIT 1
+);"
 docker compose "${COMPOSE_FILES[@]}" exec db psql -U odoo -d "$ODOO_DB_NAME" -c "$SQL" -q >/dev/null 2>&1
 
 print_info "Starting Odoo..."
