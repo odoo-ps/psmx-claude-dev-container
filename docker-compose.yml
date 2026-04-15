@@ -9,7 +9,7 @@ services:
       - "${ODOO_DEBUG_PORT:-5678}:5678"
     volumes:
       - .:/workspace
-      - odoo-web-data:/var/lib/odoo
+      - ${HOME}/Odoo/.data/${ODOO_DB_NAME}:/var/lib/odoo
       - ./config:/etc/odoo
       # Custom modules
       - ${CUSTOMER_REPO}:/mnt/extra-addons
@@ -18,9 +18,6 @@ services:
       # Vault mounted at the same host path so git worktree symlinks resolve inside the container (required for GitLens)
       - ${ODOO_VAULT_PATH:-${HOME}/Odoo/.vault}:${ODOO_VAULT_PATH:-${HOME}/Odoo/.vault}:ro
     environment:
-      - HOST=db
-      - USER=odoo
-      - PASSWORD=odoo
       - ODOO_DEBUG=${ODOO_DEBUG:-true}
       - ODOO_DB_NAME=${ODOO_DB_NAME}
       - ODOO_EXTRA_ARGS=${ODOO_EXTRA_ARGS:-}
@@ -64,6 +61,5 @@ services:
       start_period: 30s
 
 volumes:
-  odoo-web-data:
   odoo-db-data:
   odoo-pgadmin-data:

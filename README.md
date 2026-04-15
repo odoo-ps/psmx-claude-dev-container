@@ -70,9 +70,10 @@ make build
 **4. Restore a database** *(optional)*
 
 ```bash
-make restore dump=acme_prod.dump
+make restore dump=acme_prod.zip
 ```
 
+> Accepts `.zip` (Odoo backup with filestore), `.dump`, or `.sql`.
 > Skip this step to start with a fresh empty database — Odoo creates it
 > automatically on first `make start`.
 

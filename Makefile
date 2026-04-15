@@ -207,7 +207,7 @@ reset: check-env check-worktrees ## Reset the database: drop, recreate, and inst
 	@echo "  \033[32m✓ Database initialized. Run 'make start' to launch Odoo.\033[0m"
 	@echo ""
 
-restore: check-env ## Restore a database. Usage: make restore dump=file.dump
+restore: check-env ## Restore a database. Usage: make restore dump=backup.zip
 	./restore.sh dumps/$(dump)
 
 update: check-worktrees ## Update Odoo modules. Usage: make update modules=mod1,mod2
@@ -241,11 +241,13 @@ test-file: check-worktrees ## Run tests from a file. Usage: make test-file file=
 
 destroy: check-env stop ## Remove all containers, networks and volumes (deletes the database)
 	@echo ""
-	@echo "  \033[33mWARNING\033[0m: This will remove all containers, networks and volumes."
-	@echo "  The database '$(ODOO_DB_NAME)' will be permanently deleted."
+	@echo "  \033[33mWARNING\033[0m: This will remove all containers, networks, volumes,"
+	@echo "  and the Odoo data directory for '$(ODOO_DB_NAME)'."
+	@echo "  This action is irreversible."
 	@echo ""
 	@read -p "  Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ] \
 		&& docker compose $(COMPOSE_FILES) --profile pgadmin down -v \
+		&& rm -rf "$(HOME)/Odoo/.data/$(ODOO_DB_NAME)" \
 		|| echo "Aborted."
 	@echo ""
 

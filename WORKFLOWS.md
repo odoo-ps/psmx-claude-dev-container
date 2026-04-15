@@ -27,10 +27,10 @@ cp .env.example .env
 make build
 
 # 5. Place the database dump
-cp ~/Downloads/acme_prod.dump ~/Odoo/Dumps/
+cp ~/Downloads/acme_prod.zip ~/Odoo/Dumps/
 
 # 6. Restore the database
-make restore dump=acme_prod.dump   # also accepts .sql files
+make restore dump=acme_prod.zip   # also accepts .dump and .sql
 # Or initialize a fresh database instead:
 # make reset
 
@@ -51,6 +51,7 @@ code .
 ## 2. Two clients simultaneously
 
 Each client needs its own clone of the template with different ports to avoid conflicts.
+Data isolation is automatic — each client's Odoo data lives under `~/Odoo/.data/<ODOO_DB_NAME>/`.
 
 ```bash
 # --- Client A: Acme (ports 8069 / 5678) ---
@@ -105,7 +106,7 @@ database — restore, update, inspect, repeat.
 cd ~/Odoo/Customers/acme
 
 # Restore a clean database before each attempt
-make restore dump=acme_prod.dump
+make restore dump=acme_prod.zip
 
 # Update one or more modules
 make update modules=acme_sale
@@ -160,7 +161,7 @@ make worktree-add VERSION=18.0
 make build
 
 # 4. Restore the pre-upgrade database
-make restore dump=acme_pre_upgrade.dump
+make restore dump=acme_pre_upgrade.zip
 
 # 5. Start the environment
 make start
@@ -171,7 +172,7 @@ make start
 make update modules=acme_sale
 
 # 7. Iterate: restore clean → migrate → inspect → repeat
-make restore dump=acme_pre_upgrade.dump
+make restore dump=acme_pre_upgrade.zip
 make update modules=acme_sale
 ```
 
@@ -241,4 +242,4 @@ make start
 | Hot reload | `ODOO_EXTRA_ARGS=--dev=all` |
 | No debugger overhead | `ODOO_DEBUG=false` |
 | Fresh database | `make reset` then `make start` |
-| Restore from dump | `make restore dump=file.dump` (or `.sql`) then `make start` |
+| Restore from dump | `make restore dump=backup.zip` (or `.dump`, `.sql`) then `make start` |

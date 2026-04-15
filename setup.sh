@@ -16,6 +16,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ODOO_BASE=~/Odoo
 VAULT_DIR="$ODOO_BASE/.vault"
+DATA_DIR="$ODOO_BASE/.data"
 WORKTREES_DIR="$ODOO_BASE/Worktrees"
 CUSTOMERS_DIR="$ODOO_BASE/Customers"
 REPOS_DIR="$ODOO_BASE/Repos"
@@ -87,6 +88,7 @@ create_directories() {
 
   local dirs=(
     "$VAULT_DIR"
+    "$DATA_DIR"
     "$WORKTREES_DIR"
     "$CUSTOMERS_DIR"
     "$REPOS_DIR"

@@ -29,7 +29,7 @@ make psql                                Open a psql shell against the active da
 make ps                                  Show container status
 make build                               Build the Docker image for ODOO_VERSION
 make reset                               Reset the database: drop, recreate, and install base module
-make restore dump=file.dump|sql          Restore a database from ~/Odoo/Dumps/ (.dump or .sql)
+make restore dump=backup.zip             Restore a database from ~/Odoo/Dumps/ (.zip, .dump, or .sql)
 make update modules=mod1,mod2            Update Odoo modules
 make test modules=mod1,mod2              Update modules and run Odoo test suite.
 make test-tags tags=/mod:Class.method    Run tests matching a tag, class or method
@@ -304,7 +304,7 @@ Use `make reset` to reset the database. This drops any existing database,
 creates a new one, and installs the `base` module with `--stop-after-init`.
 Run `make start` afterwards to launch Odoo normally.
 
-Use `make restore dump=file.dump` to restore from an existing dump instead.
+Use `make restore dump=backup.zip` to restore from an existing dump instead.
 Do not put `-i base` in `ODOO_EXTRA_ARGS` — it would reinstall the base module
 on every startup. `ODOO_EXTRA_ARGS` is reserved for arguments that apply on
 every run (e.g. `--dev=all`).
@@ -338,3 +338,28 @@ Option 2: rebuild here   →  make build
 ```
 
 Option 1 is instant. Option 2 rebuilds the image in the current context (preferred if you want to stay on `desktop-linux`).
+
+---
+
+## Migrating from a previous version
+
+### Orphaned `odoo-web-data` volume
+
+Earlier versions of this template stored Odoo's data (filestore, sessions) in a
+named Docker volume called `odoo-web-data`. That volume has been replaced by a
+bind mount at `~/Odoo/.data/<ODOO_DB_NAME>`.
+
+If you set up the template before this change, the old volume is still present on
+your machine but is no longer used. It will not be removed automatically by
+`make destroy`. To clean it up:
+
+```bash
+# Find the volume (prefix matches your COMPOSE_PROJECT_NAME)
+docker volume ls | grep odoo-web-data
+
+# Remove it
+docker volume rm <project>_odoo-web-data
+```
+
+Your data is not lost — it is still inside that volume. If you need to recover
+anything from it, mount it temporarily to inspect it before deleting.
