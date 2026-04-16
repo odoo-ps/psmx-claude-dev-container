@@ -22,7 +22,7 @@ ODOO_CONF     := /etc/odoo/odoo.conf
 BUILD_VERSION := $(ODOO_VERSION)
 endif
 
-.PHONY: start stop restart restart-all logs shell psql ps init restore update test test-tags test-file build destroy pull-all worktree worktree-add worktree-remove check-env check-image check-ports check-worktrees list list-worktrees workspace help
+.PHONY: start stop restart restart-all logs shell psql ps init restore update test test-tags test-file build destroy pull-all worktree worktree-add worktree-remove check-env check-image check-ports check-worktrees check-version list list-worktrees workspace help
 
 check-env:
 	@if [ ! -f .env ]; then \
@@ -126,7 +126,20 @@ check-worktrees:
 		fi; \
 	fi
 
-start: check-env check-worktrees check-image check-ports workspace ## Start the environment
+check-version:
+	@_local=$$(git describe --tags --abbrev=0 2>/dev/null); \
+	_remote=$$(git ls-remote --tags origin 'v*' 2>/dev/null \
+		| grep -v '\^{}' | sed 's|.*refs/tags/||' | sort -V | tail -1); \
+	if [ -n "$$_local" ] && [ -n "$$_remote" ] && [ "$$_local" != "$$_remote" ]; then \
+		_newer=$$(printf '%s\n%s' "$$_local" "$$_remote" | sort -V | tail -1); \
+		if [ "$$_newer" = "$$_remote" ]; then \
+			echo ""; \
+			echo "  \033[33m⚠ New version available: $$_local → $$_remote  (git pull to update)\033[0m"; \
+			echo ""; \
+		fi; \
+	fi
+
+start: check-env check-worktrees check-image check-ports workspace check-version ## Start the environment
 	docker compose $(COMPOSE_FILES) up -d
 	@echo ""
 	@echo "  \033[32m✓ Environment started → http://localhost:$${ODOO_PORT:-8069}\033[0m"
