@@ -281,41 +281,7 @@ worktree-remove: ## Remove a worktree — usage: make worktree-remove VERSION=17
 
 
 pull-all: ## Update all worktrees to the latest commit on their origin branch
-	@echo ""
-	@echo "  Fetching from origin..."
-	@echo ""
-	@for repo in odoo enterprise design-themes; do \
-		printf "  \033[1m%-20s\033[0m" "$$repo"; \
-		git -C "$$(eval echo "$(ODOO_VAULT_PATH)")/$$repo.git" fetch --prune origin \
-			'+refs/heads/*:refs/remotes/origin/*' > /dev/null 2>&1 \
-			&& printf "\033[32m✓ fetched\033[0m\n" \
-			|| { printf "\033[31m✗ fetch failed — check SSH access to GitHub\033[0m\n"; exit 1; }; \
-	done
-	@echo ""
-	@echo "  Updating worktrees..."
-	@echo ""
-	@_path=$$(eval echo "$(ODOO_WORKTREE_PATH)"); \
-	if [ ! -d "$$_path" ]; then \
-		echo "  \033[31mNo worktrees found in $$_path\033[0m"; \
-		echo ""; \
-		exit 0; \
-	fi; \
-	found=0; \
-	for version_dir in "$$_path"/*/; do \
-		[ -d "$$version_dir" ] || continue; \
-		found=1; \
-		version=$$(basename "$$version_dir"); \
-		printf "  \033[1m%s\033[0m\n" "$$version"; \
-		for repo in odoo enterprise design-themes; do \
-			dest="$$_path/$$version/$$repo"; \
-			[ -d "$$dest" ] || continue; \
-			git -C "$$dest" reset --hard "origin/$$version" > /dev/null 2>&1 \
-				&& printf "  \033[32m✓\033[0m %s\n" "$$repo" \
-				|| printf "  \033[31m✗\033[0m %s (failed — check if origin/$$version exists)\n" "$$repo"; \
-		done; \
-		echo ""; \
-	done; \
-	[ "$$found" = "1" ] || { echo "  No worktrees found."; echo ""; }
+	@bash pull-all.sh
 
 build: check-env ## Build the Docker image for the active version
 	docker build \
