@@ -25,11 +25,11 @@ make restart                             Restart the Odoo server (keeps the data
 make restart-all                         Restart the entire stack (Odoo + database)
 make logs                                Stream Odoo server logs
 make shell                               Open an Odoo ORM shell (Python REPL with env pre-loaded)
-make psql                                Open a psql shell against the active database
+make psql [db=other_name]                Open a psql shell (default: active database)
 make ps                                  Show container status
 make build                               Build the Docker image for ODOO_VERSION
 make reset                               Reset the database: drop, recreate, and install base module
-make restore dump=backup.zip             Restore a database from ~/Odoo/Dumps/ (.zip, .dump, or .sql)
+make restore dump=<file> [db=<name>]     Restore a database from ~/Odoo/Dumps/ (.zip, .dump, or .sql)
 make update modules=mod1,mod2            Update Odoo modules
 make test modules=mod1,mod2              Update modules and run Odoo test suite.
 make test-tags tags=/mod:Class.method    Run tests matching a tag, class or method
@@ -223,10 +223,22 @@ env.cr.commit()
 Opens a `psql` session directly against the active database. Useful for raw
 SQL queries, schema inspection, or debugging without launching pgAdmin.
 
+```bash
+# Connect to the active database (ODOO_DB_NAME)
+make psql
+
+# Connect to a specific database — e.g. a secondary restore
+make psql db=acme_17_prod
+```
+
 ```sql
 -- Example: check the number of partners
 SELECT COUNT(*) FROM res_partner;
 ```
+
+The optional `db=` parameter connects to any database in the same PostgreSQL
+instance without changing `.env`. From inside a psql session you can also
+switch with `\c <dbname>`.
 
 ---
 

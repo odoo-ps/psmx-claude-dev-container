@@ -183,6 +183,27 @@ models side by side.
 To switch back to development mode, set `ODOO_MODE=development` in
 `.env` and run `make restart-all`.
 
+### Keeping a production reference database for SQL comparison
+
+During upgrade work it can be useful to have the original production
+database available alongside the upgraded one — for data comparison via
+`psql` or pgAdmin — without stopping the running Odoo instance.
+
+```bash
+# Restore the prod backup as a secondary database (Odoo keeps running)
+make restore dump=acme_prod.zip db=acme_17_prod
+
+# Compare both databases side by side in two terminals
+make psql                      # → ODOO_DB_NAME (upgraded database)
+make psql db=acme_17_prod      # → production reference
+```
+
+Both databases live in the same PostgreSQL instance. When `db=` is
+provided, the web container is not stopped or restarted. The reference
+database is intended for read-only SQL inspection — to run Odoo against
+it, switch `ODOO_DB_NAME` and `ODOO_MODE`/`ODOO_VERSION` in `.env` and
+run `make restart`.
+
 ---
 
 ## 5. Building the Docker image
@@ -243,3 +264,4 @@ make start
 | No debugger overhead | `ODOO_DEBUG=false` |
 | Fresh database | `make reset` then `make start` |
 | Restore from dump | `make restore dump=backup.zip` (or `.dump`, `.sql`) then `make start` |
+| Restore secondary DB (upgrade reference) | `make restore dump=backup.zip db=acme_17_prod` |

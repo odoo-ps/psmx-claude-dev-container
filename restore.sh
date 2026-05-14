@@ -20,11 +20,14 @@ if [ -z "$(docker compose "${COMPOSE_FILES[@]}" ps --all -q web 2>/dev/null)" ];
     exit 1
 fi
 
-# --- Validate argument -------------------------------------------------------
+# --- Validate arguments ------------------------------------------------------
 FILE="${1:-}"
+TARGET_DB="${2:-${ODOO_DB_NAME}}"
+SECONDARY_RESTORE=false
+[ "$TARGET_DB" != "$ODOO_DB_NAME" ] && SECONDARY_RESTORE=true
 
 if [ -z "$FILE" ]; then
-    print_error "Usage: make restore dump=<filename>.zip|.dump|.sql"
+    print_error "Usage: make restore dump=<filename>.zip|.dump|.sql [db=<dbname>]"
     exit 1
 fi
 
@@ -34,17 +37,19 @@ if [[ "$FILE" != *.dump ]] && [[ "$FILE" != *.sql ]] && [[ "$FILE" != *.zip ]]; 
 fi
 
 # --- Restore -----------------------------------------------------------------
-print_info "Stopping Odoo web service..."
-docker compose "${COMPOSE_FILES[@]}" stop web >/dev/null 2>&1
+if [ "$SECONDARY_RESTORE" = "false" ]; then
+    print_info "Stopping Odoo web service..."
+    docker compose "${COMPOSE_FILES[@]}" stop web >/dev/null 2>&1
+fi
 
 print_info "Starting database service..."
 docker compose "${COMPOSE_FILES[@]}" up -d --wait db >/dev/null 2>&1
 
-print_info "Dropping existing database ($ODOO_DB_NAME)..."
-docker compose "${COMPOSE_FILES[@]}" exec db dropdb -U odoo --if-exists "$ODOO_DB_NAME" >/dev/null 2>&1
+print_info "Dropping existing database ($TARGET_DB)..."
+docker compose "${COMPOSE_FILES[@]}" exec db dropdb -U odoo --if-exists "$TARGET_DB" >/dev/null 2>&1
 
-print_info "Creating fresh database ($ODOO_DB_NAME)..."
-docker compose "${COMPOSE_FILES[@]}" exec db createdb -U odoo "$ODOO_DB_NAME" >/dev/null 2>&1
+print_info "Creating fresh database ($TARGET_DB)..."
+docker compose "${COMPOSE_FILES[@]}" exec db createdb -U odoo "$TARGET_DB" >/dev/null 2>&1
 
 if [[ "$FILE" == *.zip ]]; then
     DUMPS_PATH="${DUMPS_PATH:-$HOME/Odoo/Dumps}"
@@ -66,14 +71,14 @@ if [[ "$FILE" == *.zip ]]; then
 
     run_with_spinner "Restoring ${FILE}..." \
         docker compose "${COMPOSE_FILES[@]}" exec -T db \
-            psql -U odoo -d "$ODOO_DB_NAME" -q -f /tmp/odoo-restore.sql \
+            psql -U odoo -d "$TARGET_DB" -q -f /tmp/odoo-restore.sql \
         || { print_error "Restore failed — check the dump file."; exit 1; }
 
     docker compose "${COMPOSE_FILES[@]}" exec -T db rm -f /tmp/odoo-restore.sql >/dev/null 2>&1
 
     FILESTORE_SRC="$WORK_DIR/filestore"
     if [ -d "$FILESTORE_SRC" ] && [ -n "$(ls -A "$FILESTORE_SRC" 2>/dev/null)" ]; then
-        TARGET="$HOME/Odoo/.data/$ODOO_DB_NAME/filestore/$ODOO_DB_NAME"
+        TARGET="$HOME/Odoo/.data/$TARGET_DB/filestore/$TARGET_DB"
         run_with_spinner "Installing filestore..." \
             bash -c "rm -rf \"$TARGET\" && mkdir -p \"$(dirname "$TARGET")\" && mv \"$FILESTORE_SRC\" \"$TARGET\""
         print_ok "Filestore installed."
@@ -81,12 +86,12 @@ if [[ "$FILE" == *.zip ]]; then
 elif [[ "$FILE" == *.dump ]]; then
     run_with_spinner "Restoring ${FILE}..." \
         docker compose "${COMPOSE_FILES[@]}" exec -T db \
-            pg_restore -U odoo -d "$ODOO_DB_NAME" -1 "/$FILE" \
+            pg_restore -U odoo -d "$TARGET_DB" -1 "/$FILE" \
         || { print_error "Restore failed — check the dump file."; exit 1; }
 else
     run_with_spinner "Restoring ${FILE}..." \
         docker compose "${COMPOSE_FILES[@]}" exec -T db \
-            psql -U odoo -d "$ODOO_DB_NAME" -f "/$FILE" -q \
+            psql -U odoo -d "$TARGET_DB" -f "/$FILE" -q \
         || { print_error "Restore failed — check the dump file."; exit 1; }
 fi
 
@@ -126,11 +131,14 @@ WHERE id = (
     ORDER BY priority ASC, id ASC
     LIMIT 1
 );"
-docker compose "${COMPOSE_FILES[@]}" exec -T db psql -U odoo -d "$ODOO_DB_NAME" -c "$SQL" -q >/dev/null
-
-print_info "Starting Odoo..."
-docker compose "${COMPOSE_FILES[@]}" start web >/dev/null 2>&1
+docker compose "${COMPOSE_FILES[@]}" exec -T db psql -U odoo -d "$TARGET_DB" -c "$SQL" -q >/dev/null
 
 echo ""
-print_ok "Database restored — log in at http://localhost:${ODOO_PORT:-8069}"
+if [ "$SECONDARY_RESTORE" = "false" ]; then
+    print_info "Starting Odoo..."
+    docker compose "${COMPOSE_FILES[@]}" start web >/dev/null 2>&1
+    print_ok "Database restored — log in at http://localhost:${ODOO_PORT:-8069}"
+else
+    print_ok "Database '$TARGET_DB' restored — access via: make psql db=$TARGET_DB"
+fi
 echo ""

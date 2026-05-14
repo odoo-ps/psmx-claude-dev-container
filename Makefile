@@ -162,8 +162,8 @@ shell: check-env ## Open an Odoo ORM shell (Python REPL with env pre-loaded)
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME)
 
-psql: check-env ## Open a psql shell against the active database
-	docker compose $(COMPOSE_FILES) exec db psql -U odoo -d $(ODOO_DB_NAME)
+psql: check-env ## Open a psql shell. Usage: make psql [db=other_name]
+	docker compose $(COMPOSE_FILES) exec db psql -U odoo -d $(if $(db),$(db),$(ODOO_DB_NAME))
 
 ps: check-env ## Show container status
 	docker compose $(COMPOSE_FILES) ps
@@ -220,8 +220,9 @@ reset: check-env check-worktrees ## Reset the database: drop, recreate, and inst
 	@echo "  \033[32m✓ Database initialized. Run 'make start' to launch Odoo.\033[0m"
 	@echo ""
 
-restore: check-env ## Restore a database. Usage: make restore dump=backup.zip
-	./restore.sh dumps/$(dump)
+restore: check-env ## Restore a database. Usage: make restore dump=backup.zip [db=other_name]
+	@[ -n "$(dump)" ] || { echo ""; echo "  \033[31mError: dump= is required. Usage: make restore dump=backup.zip [db=other_name]\033[0m"; echo ""; exit 1; }
+	./restore.sh dumps/$(dump) $(db)
 
 update: check-worktrees ## Update Odoo modules. Usage: make update modules=mod1,mod2
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) \
@@ -353,6 +354,7 @@ help: ## Show this help message
 	@echo ""
 	@echo "Examples:"
 	@echo "  make restore dump=client_prod.dump"
+	@echo "  make restore dump=client_prod.dump db=cliente_17_prod"
 	@echo "  make update modules=sale,account"
 	@echo "  make test modules=sale,account"
 	@echo "  make test-tags tags=/sale:TestSale.test_method"
