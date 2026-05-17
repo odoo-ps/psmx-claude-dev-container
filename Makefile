@@ -22,7 +22,7 @@ ODOO_CONF     := /etc/odoo/odoo.conf
 BUILD_VERSION := $(ODOO_VERSION)
 endif
 
-.PHONY: start stop restart restart-all logs shell psql ps init restore update test test-tags test-file build destroy pull-all worktree worktree-add worktree-remove check-env check-image check-ports check-worktrees check-version list list-worktrees workspace help
+.PHONY: start stop restart restart-all logs shell psql extract ps init restore update test test-tags test-file build destroy pull-all worktree worktree-add worktree-remove check-env check-image check-ports check-worktrees check-version list list-worktrees workspace help
 
 check-env:
 	@if [ ! -f .env ]; then \
@@ -164,6 +164,10 @@ shell: check-env ## Open an Odoo ORM shell (Python REPL with env pre-loaded)
 
 psql: check-env ## Open a psql shell. Usage: make psql [db=other_name]
 	docker compose $(COMPOSE_FILES) exec db psql -U odoo -d $(if $(db),$(db),$(ODOO_DB_NAME))
+
+extract: check-env ## Extract a file from the db container. Usage: make extract src=/tmp/file.csv [dest=.]
+	@[ -n "$(src)" ] || { echo ""; echo "  \033[31mError: src= is required. Usage: make extract src=/tmp/file.csv [dest=.]\033[0m"; echo ""; exit 1; }
+	docker compose $(COMPOSE_FILES) cp db:$(src) $(if $(dest),$(dest),.)
 
 ps: check-env ## Show container status
 	docker compose $(COMPOSE_FILES) ps

@@ -26,6 +26,7 @@ make restart-all                         Restart the entire stack (Odoo + databa
 make logs                                Stream Odoo server logs
 make shell                               Open an Odoo ORM shell (Python REPL with env pre-loaded)
 make psql [db=other_name]                Open a psql shell (default: active database)
+make extract src=<path> [dest=.]         Extract a file from the db container to the host
 make ps                                  Show container status
 make build                               Build the Docker image for ODOO_VERSION
 make reset                               Reset the database: drop, recreate, and install base module
@@ -239,6 +240,38 @@ SELECT COUNT(*) FROM res_partner;
 The optional `db=` parameter connects to any database in the same PostgreSQL
 instance without changing `.env`. From inside a psql session you can also
 switch with `\c <dbname>`.
+
+### `make extract` — extract files from the db container
+
+The `db` container has no writable bind mounts to the host. Use `make extract`
+to copy files generated inside the container — via `\o` or `COPY TO FILE` —
+to your machine.
+
+```bash
+# Extract to current directory
+make extract src=/tmp/output.txt
+
+# Extract to a specific path
+make extract src=/tmp/partners.csv dest=~/Odoo/Dumps
+```
+
+**Common workflow:**
+
+```sql
+-- Inside psql: export query results to CSV
+COPY (SELECT * FROM res_partner WHERE active = true)
+TO '/tmp/partners.csv' WITH CSV HEADER;
+
+-- Or redirect output of any query
+\o /tmp/output.txt
+SELECT id, name, email FROM res_partner LIMIT 100;
+\o
+```
+
+```bash
+-- Then extract to your machine
+make extract src=/tmp/partners.csv dest=~/Odoo/Dumps
+```
 
 ---
 
