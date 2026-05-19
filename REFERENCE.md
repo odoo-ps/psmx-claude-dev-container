@@ -24,7 +24,7 @@ make stop                                Stop the environment (including pgAdmin
 make restart                             Restart the Odoo server (keeps the database running)
 make restart-all                         Restart the entire stack (Odoo + database)
 make logs                                Stream Odoo server logs
-make shell                               Open an Odoo ORM shell (Python REPL with env pre-loaded)
+make shell [script=path/to/script.py]    Open an Odoo ORM shell, or run a script non-interactively
 make psql [db=other_name]                Open a psql shell (default: active database)
 make extract src=<path> [dest=.]         Extract a file from the db container to the host
 make ps                                  Show container status
@@ -210,6 +210,19 @@ Two ways to interact directly with the running environment without a GUI.
 Opens a Python REPL with the Odoo `env` variable pre-loaded and connected to
 the active database. Changes run inside a transaction that is rolled back on
 exit — use `env.cr.commit()` to persist them.
+
+```bash
+# Interactive REPL
+make shell
+
+# Run a script non-interactively and exit
+make shell script=fix_mega_menu.py
+```
+
+When `script=` is provided, the file is piped to the shell process via stdin
+(equivalent to `odoo-bin shell -d <db> < script.py`). The script runs in the
+same environment as the interactive shell — `env`, `self`, and `env.cr` are
+all available.
 
 ```python
 # Example: add an exclamation mark to all partner names

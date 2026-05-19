@@ -157,10 +157,16 @@ restart-all: stop start ## Restart the entire stack (Odoo + database)
 logs: check-env ## Stream Odoo server logs
 	docker compose $(COMPOSE_FILES) logs -f web
 
-shell: check-env ## Open an Odoo ORM shell (Python REPL with env pre-loaded)
+shell: check-env ## Open an Odoo ORM shell. Usage: make shell [script=path/to/script.py]
+ifdef script
+	docker compose $(COMPOSE_FILES) exec -T web python $(ODOO_BIN) shell \
+		-c $(ODOO_CONF) \
+		-d $(ODOO_DB_NAME) < $(script)
+else
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) shell \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME)
+endif
 
 psql: check-env ## Open a psql shell. Usage: make psql [db=other_name]
 	docker compose $(COMPOSE_FILES) exec db psql -U odoo -d $(if $(db),$(db),$(ODOO_DB_NAME))
