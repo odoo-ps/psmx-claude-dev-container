@@ -166,6 +166,8 @@ clone_vault() {
       fi
       echo -e "  Cloning ${BOLD}${name}${NC} from GitHub..."
       git clone --bare "$url" "$dest"
+      git -C "$dest" config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+      git -C "$dest" fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
       print_ok ".vault/${name}.git"
     fi
   }

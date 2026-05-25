@@ -77,15 +77,18 @@ check-image:
 
 check-ports:
 	@_ok=1; \
+	_our_containers=$$(docker compose $(COMPOSE_FILES) ps --format '{{.Name}}' 2>/dev/null); \
 	_check_port() { \
 		_port=$$1; _var=$$2; \
 		_container=$$(docker ps --format '{{.Names}}\t{{.Ports}}' 2>/dev/null \
 			| awk -v p="$$_port" '$$0 ~ ":"p"->" {print $$1}'); \
 		if [ -n "$$_container" ]; then \
-			echo ""; \
-			echo "  \033[31mError: $$_var=$$_port is already used by container '$$_container'.\033[0m"; \
-			echo "  Set a different $$_var in .env (e.g. $$_var=$$((_port + 1)))"; \
-			_ok=0; \
+			if ! echo "$$_our_containers" | grep -qF "$$_container"; then \
+				echo ""; \
+				echo "  \033[31mError: $$_var=$$_port is already used by container '$$_container'.\033[0m"; \
+				echo "  Set a different $$_var in .env (e.g. $$_var=$$((_port + 1)))"; \
+				_ok=0; \
+			fi; \
 		elif lsof -i "TCP:$$_port" -sTCP:LISTEN > /dev/null 2>&1; then \
 			echo ""; \
 			echo "  \033[31mError: $$_var=$$_port is already in use by another process.\033[0m"; \
@@ -140,11 +143,18 @@ check-version:
 	fi
 
 start: check-env check-worktrees check-image check-ports workspace check-version ## Start the environment
-	docker compose $(COMPOSE_FILES) up -d
-	@echo ""
-	@echo "  \033[32m✓ Environment started → http://localhost:$${ODOO_PORT:-8069}\033[0m"
-	@echo "  Run 'make logs' in a new terminal to follow the Odoo startup."
-	@echo ""
+	@if docker compose $(COMPOSE_FILES) ps --services --filter status=running 2>/dev/null | grep -q "^web$$"; then \
+		echo ""; \
+		echo "  \033[33m⚠ Environment is already running → http://localhost:$${ODOO_PORT:-8069}\033[0m"; \
+		echo "  Use 'make stop' to bring it down or 'make restart' to restart Odoo."; \
+		echo ""; \
+	else \
+		docker compose $(COMPOSE_FILES) up -d && \
+		echo "" && \
+		echo "  \033[32m✓ Environment started → http://localhost:$${ODOO_PORT:-8069}\033[0m" && \
+		echo "  Run 'make logs' in a new terminal to follow the Odoo startup." && \
+		echo ""; \
+	fi
 
 stop: check-env ## Stop the environment
 	docker compose $(COMPOSE_FILES) --profile pgadmin down
