@@ -126,7 +126,7 @@ cmd_add() {
     echo ""
     echo -e "${BOLD}  Next steps:${NC}"
     echo -e "    Build the Docker image:"
-    echo -e "    ${CYAN}docker build -t odoo-dev:$version ~/Odoo/Worktrees/$version${NC}"
+    echo -e "    ${CYAN}make build${NC}"
     echo ""
 }
 

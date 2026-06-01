@@ -22,7 +22,7 @@ ODOO_CONF     := /etc/odoo/odoo.conf
 BUILD_VERSION := $(ODOO_VERSION)
 endif
 
-.PHONY: start stop restart restart-all logs shell psql extract ps init restore update test test-tags test-file build destroy pull-all worktree worktree-add worktree-remove check-env check-image check-ports check-worktrees check-version list list-worktrees workspace help
+.PHONY: start stop restart restart-all logs shell psql extract ps init restore update test test-tags test-file build destroy pull-all worktree worktree-add worktree-remove check-env check-image check-ports check-worktrees check-version check-running list list-worktrees workspace help
 
 check-env:
 	@if [ ! -f .env ]; then \
@@ -43,6 +43,16 @@ check-env:
 		[ -n "$(ODOO_VERSION)" ] || _fail ODOO_VERSION; \
 	fi; \
 	[ "$$ok" = "1" ] || { echo ""; echo "  Fix the above before running make."; echo ""; exit 1; }
+
+check-running: check-env
+	@if [ -z "$$(docker compose $(COMPOSE_FILES) ps -q --status running web 2>/dev/null)" ]; then \
+		echo ""; \
+		echo "  \033[31mError: The environment is not running.\033[0m"; \
+		echo "  Start it first with: make start"; \
+		echo ""; \
+		exit 1; \
+	fi
+
 
 check-image:
 	@if ! docker image inspect odoo-dev:$(BUILD_VERSION) > /dev/null 2>&1; then \
@@ -167,7 +177,7 @@ restart-all: stop start ## Restart the entire stack (Odoo + database)
 logs: check-env ## Stream Odoo server logs
 	docker compose $(COMPOSE_FILES) logs -f web
 
-shell: check-env ## Open an Odoo ORM shell. Usage: make shell [script=path/to/script.py]
+shell: check-running ## Open an Odoo ORM shell. Usage: make shell [script=path/to/script.py]
 ifdef script
 	docker compose $(COMPOSE_FILES) exec -T web python $(ODOO_BIN) shell \
 		-c $(ODOO_CONF) \
@@ -178,10 +188,10 @@ else
 		-d $(ODOO_DB_NAME)
 endif
 
-psql: check-env ## Open a psql shell. Usage: make psql [db=other_name]
+psql: check-running ## Open a psql shell. Usage: make psql [db=other_name]
 	docker compose $(COMPOSE_FILES) exec db psql -U odoo -d $(if $(db),$(db),$(ODOO_DB_NAME))
 
-extract: check-env ## Extract a file from the db container. Usage: make extract src=/tmp/file.csv [dest=.]
+extract: check-running ## Extract a file from the db container. Usage: make extract src=/tmp/file.csv [dest=.]
 	@[ -n "$(src)" ] || { echo ""; echo "  \033[31mError: src= is required. Usage: make extract src=/tmp/file.csv [dest=.]\033[0m"; echo ""; exit 1; }
 	docker compose $(COMPOSE_FILES) cp db:$(src) $(if $(dest),$(dest),.)
 
@@ -244,14 +254,14 @@ restore: check-env ## Restore a database. Usage: make restore dump=backup.zip [d
 	@[ -n "$(dump)" ] || { echo ""; echo "  \033[31mError: dump= is required. Usage: make restore dump=backup.zip [db=other_name]\033[0m"; echo ""; exit 1; }
 	./restore.sh dumps/$(dump) $(db)
 
-update: check-worktrees ## Update Odoo modules. Usage: make update modules=mod1,mod2
+update: check-running check-worktrees ## Update Odoo modules. Usage: make update modules=mod1,mod2
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME) \
 		-u $(modules) \
 		--stop-after-init
 
-test: check-worktrees ## Run tests for modules. Usage: make test modules=sale,account
+test: check-running check-worktrees ## Run tests for modules. Usage: make test modules=sale,account
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME) \
@@ -259,14 +269,14 @@ test: check-worktrees ## Run tests for modules. Usage: make test modules=sale,ac
 		--test-enable \
 		--stop-after-init
 
-test-tags: check-worktrees ## Run tests by tag. Usage: make test-tags tags=/module:Class.method
+test-tags: check-running check-worktrees ## Run tests by tag. Usage: make test-tags tags=/module:Class.method
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME) \
 		--test-tags $(tags) \
 		--stop-after-init
 
-test-file: check-worktrees ## Run tests from a file. Usage: make test-file file=/mnt/extra-addons/module/tests/test_x.py
+test-file: check-running check-worktrees ## Run tests from a file. Usage: make test-file file=/mnt/extra-addons/module/tests/test_x.py
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME) \
