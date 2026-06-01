@@ -128,14 +128,45 @@ make pgadmin
 # → http://localhost:5050
 ```
 
-To enable hot reload while fixing Python code between updates:
+### How `make update` works — and when to restart
+
+`make update` runs Odoo with `--stop-after-init`: it starts a **separate process** that
+writes module changes to the database (fields, views, records), then exits. The running
+web server is not restarted — it still has the old code in memory.
+
+Whether a page refresh is enough depends on how the server was started:
+
+| `ODOO_EXTRA_ARGS` | After `make update`… |
+|---|---|
+| _(empty — default)_ | Restart required: `make restart` → then refresh |
+| `--dev=all` | XML views and assets: refresh is enough. Python changes: still requires `make restart` |
+
+To get the faster loop during active development, set this in your `.env` **once**:
 
 ```bash
-# In .env
+# .env
 ODOO_EXTRA_ARGS=--dev=all
+```
 
+Then restart the server to apply it:
+
+```bash
 make restart
 ```
+
+From that point on, the typical loop is:
+
+```bash
+# Edit XML views or Python code, then:
+make update modules=acme_sale   # applies DB changes
+
+# If you only changed XML/assets → refresh the browser, done.
+# If you changed Python code    → make restart, then refresh.
+```
+
+> `--dev=all` also enables Odoo's asset bundler in development mode (unminified JS/CSS)
+> and makes error tracebacks visible in the browser. Disable it on production-like restores
+> if you need to test with production asset behavior.
 
 ---
 
