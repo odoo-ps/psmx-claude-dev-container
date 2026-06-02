@@ -11,7 +11,7 @@ Practical reference for the most common scenarios when working with this templat
 
 ```bash
 # 1. Clone the template
-git clone git@github.com:eagf-odoo/odoo-dev-template.git ~/Odoo/Customers/acme
+git clone git@github.com:odoo-ps/psmx-claude-dev-container.git ~/Odoo/Customers/acme
 cd ~/Odoo/Customers/acme
 
 # 2. Clone the client's module repository
@@ -55,14 +55,14 @@ Data isolation is automatic — each client's Odoo data lives under `~/Odoo/.dat
 
 ```bash
 # --- Client A: Acme (ports 8069 / 5678) ---
-git clone git@github.com:eagf-odoo/odoo-dev-template.git ~/Odoo/Customers/acme
+git clone git@github.com:odoo-ps/psmx-claude-dev-container.git ~/Odoo/Customers/acme
 cd ~/Odoo/Customers/acme
 cp .env.example .env
 # .env — set ODOO_PORT=8069, ODOO_DEBUG_PORT=5678
 make start
 
 # --- Client B: Honex (ports 8070 / 5679) ---
-git clone git@github.com:eagf-odoo/odoo-dev-template.git ~/Odoo/Customers/honex
+git clone git@github.com:odoo-ps/psmx-claude-dev-container.git ~/Odoo/Customers/honex
 cd ~/Odoo/Customers/honex
 cp .env.example .env
 # .env — set ODOO_PORT=8070, ODOO_DEBUG_PORT=5679

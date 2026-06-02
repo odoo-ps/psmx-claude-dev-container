@@ -17,6 +17,8 @@ services:
       - ${ODOO_UPGRADE_PATH:-${HOME}/Odoo/Upgrade}:/mnt/upgrade:ro
       # Vault mounted at the same host path so git worktree symlinks resolve inside the container (required for GitLens)
       - ${ODOO_VAULT_PATH:-${HOME}/Odoo/.vault}:${ODOO_VAULT_PATH:-${HOME}/Odoo/.vault}:ro
+      # CLAUDE.md file
+      - ${CLAUDE_PATH:-${HOME}/.odoo_claude/CLAUDE.md}:/root/CLAUDE.md:ro
     environment:
       - ODOO_DEBUG=${ODOO_DEBUG:-true}
       - ODOO_DB_NAME=${ODOO_DB_NAME}

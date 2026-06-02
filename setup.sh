@@ -319,7 +319,7 @@ print_summary() {
   echo ""
   echo -e "${BOLD}Next steps:${NC}"
   echo -e "  1. Clone this template for your client:"
-  echo -e "     ${CYAN}git clone git@github.com:eagf-odoo/odoo-dev-template.git ~/Odoo/Customers/<client>${NC}"
+  echo -e "     ${CYAN}git clone git@github.com:odoo-ps/psmx-claude-dev-container.git ~/Odoo/Customers/<client>${NC}"
   echo -e "  2. Configure the environment:"
   echo -e "     ${CYAN}cp .env.example .env && \$EDITOR .env${NC}"
   echo -e "  3. Build the Docker image (first time per version):"

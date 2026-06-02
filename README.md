@@ -13,6 +13,7 @@ Dockerized development environment for Odoo. Designed for custom module developm
 - Git
 - SSH access to GitHub configured
 - Directory structure created by `setup.sh` (see below)
+- Claude Code for VS Code extension
 
 ### Docker Desktop resource settings (Mac)
 
@@ -30,12 +31,14 @@ clones Odoo source repos as bare repositories, creates worktrees for the version
 you choose, and installs upgrade tools.
 
 ```bash
-git clone git@github.com:eagf-odoo/odoo-dev-template.git template
-cd template
+git clone git@github.com:odoo-ps/psmx-claude-dev-container.git
+cd psmx-claude-dev-container
 ./setup.sh
 ```
 
 The script is interactive and safe to re-run — it skips anything that already exists.
+
+Then, follow the installation instructions in [psmx-claude-md](https://github.com/odoo-ps/psmx-claude-md).
 
 ---
 
@@ -44,7 +47,7 @@ The script is interactive and safe to re-run — it skips anything that already 
 **1. Clone this template for your client**
 
 ```bash
-git clone git@github.com:eagf-odoo/odoo-dev-template.git ~/Odoo/Customers/acme
+git clone git@github.com:odoo-ps/psmx-claude-md.git ~/Odoo/Customers/acme
 cd ~/Odoo/Customers/acme
 ```
 
