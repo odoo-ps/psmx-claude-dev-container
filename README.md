@@ -47,7 +47,7 @@ Then, follow the installation instructions in [psmx-claude-md](https://github.co
 **1. Clone this template for your client**
 
 ```bash
-git clone git@github.com:odoo-ps/psmx-claude-md.git ~/Odoo/Customers/acme
+git clone git@github.com:odoo-ps/psmx-claude-dev-container.git ~/Odoo/Customers/acme
 cd ~/Odoo/Customers/acme
 ```
 
