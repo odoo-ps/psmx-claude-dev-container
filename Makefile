@@ -255,32 +255,40 @@ restore: check-env ## Restore a database. Usage: make restore dump=backup.zip [d
 	./restore.sh dumps/$(dump) $(db)
 
 update: check-running check-worktrees ## Update Odoo modules. Usage: make update modules=mod1,mod2
+	@[ -n "$(modules)" ] || { echo ""; echo "  \033[31mError: modules= is required. Usage: make update modules=mod1,mod2\033[0m"; echo ""; exit 1; }
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME) \
 		-u $(modules) \
+		--no-http \
 		--stop-after-init
 
 test: check-running check-worktrees ## Run tests for modules. Usage: make test modules=sale,account
+	@[ -n "$(modules)" ] || { echo ""; echo "  \033[31mError: modules= is required. Usage: make test modules=mod1,mod2\033[0m"; echo ""; exit 1; }
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME) \
 		-u $(modules) \
 		--test-enable \
+		--no-http \
 		--stop-after-init
 
 test-tags: check-running check-worktrees ## Run tests by tag. Usage: make test-tags tags=/module:Class.method
+	@[ -n "$(tags)" ] || { echo ""; echo "  \033[31mError: tags= is required. Usage: make test-tags tags=/module:Class.method\033[0m"; echo ""; exit 1; }
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME) \
 		--test-tags $(tags) \
+		--no-http \
 		--stop-after-init
 
 test-file: check-running check-worktrees ## Run tests from a file. Usage: make test-file file=/mnt/extra-addons/module/tests/test_x.py
+	@[ -n "$(file)" ] || { echo ""; echo "  \033[31mError: file= is required. Usage: make test-file file=/mnt/extra-addons/module/tests/test_x.py\033[0m"; echo ""; exit 1; }
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME) \
 		--test-file $(file) \
+		--no-http \
 		--stop-after-init
 
 destroy: check-env stop ## Remove all containers, networks and volumes (deletes the database)
