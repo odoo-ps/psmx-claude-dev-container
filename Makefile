@@ -11,6 +11,10 @@ DUMPS_PATH         ?= $(HOME)/Odoo/Dumps
 # Compose files — base + mode-specific override
 COMPOSE_FILES := -f docker-compose.yml -f docker-compose.$(ODOO_MODE).yml
 
+# Auxiliary HTTP port for update/test processes running alongside the live server.
+# The container always binds Odoo on 8069; this port avoids the conflict.
+ODOO_AUX_HTTP_PORT := 8071
+
 # Mode-specific variables
 ifeq ($(ODOO_MODE),upgrade)
 ODOO_BIN      := /opt/odoo-src/odoo/odoo-bin
@@ -20,6 +24,15 @@ else
 ODOO_BIN      := /mnt/reference/odoo/odoo-bin
 ODOO_CONF     := /etc/odoo/odoo.conf
 BUILD_VERSION := $(ODOO_VERSION)
+endif
+
+# Demo data flag — Odoo 19 inverted the default (demo was ON by default, now OFF).
+# demo=true  → 17/18: no flag needed  |  19: --with-demo
+# demo=false → 17/18: --without-demo all  |  19: no flag needed
+ifeq ($(demo),true)
+_DEMO_FLAG := $(if $(filter 19.%,$(BUILD_VERSION)),--with-demo,)
+else
+_DEMO_FLAG := $(if $(filter 19.%,$(BUILD_VERSION)),,--without-demo all)
 endif
 
 .PHONY: start stop restart restart-all logs shell psql extract ps init restore update test test-tags test-file build destroy pull-all worktree worktree-add worktree-remove check-env check-image check-ports check-worktrees check-version check-running list list-worktrees workspace help
@@ -206,7 +219,7 @@ pgadmin: check-env ## Start pgAdmin4 at http://localhost:5050
 		|| true
 	@echo ""
 
-reset: check-env check-worktrees ## Reset the database: drop, recreate, and install base module
+reset: check-env check-worktrees ## Reset the database: drop, recreate, and install base module. Usage: make reset [demo=true]
 	@echo ""
 	@echo "  \033[33mWARNING\033[0m: This will drop and recreate the database '$(ODOO_DB_NAME)'."
 	@echo ""
@@ -223,7 +236,7 @@ reset: check-env check-worktrees ## Reset the database: drop, recreate, and inst
 	@_log=$$(mktemp /tmp/odoo-init.XXXXXX); \
 	docker compose $(COMPOSE_FILES) run --rm --no-deps -T web \
 		python3 $(ODOO_BIN) --config $(ODOO_CONF) \
-		-d $(ODOO_DB_NAME) -i base --stop-after-init \
+		-d $(ODOO_DB_NAME) -i base $(_DEMO_FLAG) --stop-after-init \
 		> "$$_log" 2>&1 & \
 	_pid=$$!; _i=0; \
 	while kill -0 "$$_pid" 2>/dev/null; do \
@@ -260,35 +273,38 @@ update: check-running check-worktrees ## Update Odoo modules. Usage: make update
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME) \
 		-u $(modules) \
-		--no-http \
+		--http-port $(ODOO_AUX_HTTP_PORT) \
 		--stop-after-init
 
-test: check-running check-worktrees ## Run tests for modules. Usage: make test modules=sale,account
+test: check-running check-worktrees ## Run tests for modules. Usage: make test modules=sale,account [demo=true]
 	@[ -n "$(modules)" ] || { echo ""; echo "  \033[31mError: modules= is required. Usage: make test modules=mod1,mod2\033[0m"; echo ""; exit 1; }
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME) \
 		-u $(modules) \
 		--test-enable \
-		--no-http \
+		--http-port $(ODOO_AUX_HTTP_PORT) \
+		$(_DEMO_FLAG) \
 		--stop-after-init
 
-test-tags: check-running check-worktrees ## Run tests by tag. Usage: make test-tags tags=/module:Class.method
+test-tags: check-running check-worktrees ## Run tests by tag. Usage: make test-tags tags=/module:Class.method [demo=true]
 	@[ -n "$(tags)" ] || { echo ""; echo "  \033[31mError: tags= is required. Usage: make test-tags tags=/module:Class.method\033[0m"; echo ""; exit 1; }
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME) \
 		--test-tags $(tags) \
-		--no-http \
+		--http-port $(ODOO_AUX_HTTP_PORT) \
+		$(_DEMO_FLAG) \
 		--stop-after-init
 
-test-file: check-running check-worktrees ## Run tests from a file. Usage: make test-file file=/mnt/extra-addons/module/tests/test_x.py
+test-file: check-running check-worktrees ## Run tests from a file. Usage: make test-file file=/mnt/extra-addons/module/tests/test_x.py [demo=true]
 	@[ -n "$(file)" ] || { echo ""; echo "  \033[31mError: file= is required. Usage: make test-file file=/mnt/extra-addons/module/tests/test_x.py\033[0m"; echo ""; exit 1; }
 	docker compose $(COMPOSE_FILES) exec web python $(ODOO_BIN) \
 		-c $(ODOO_CONF) \
 		-d $(ODOO_DB_NAME) \
 		--test-file $(file) \
-		--no-http \
+		--http-port $(ODOO_AUX_HTTP_PORT) \
+		$(_DEMO_FLAG) \
 		--stop-after-init
 
 destroy: check-env stop ## Remove all containers, networks and volumes (deletes the database)

@@ -19,30 +19,30 @@ see [WORKFLOWS.md](WORKFLOWS.md).
 ## Available commands
 
 ```
-make start                               Start the environment
-make stop                                Stop the environment (including pgAdmin if running)
-make restart                             Restart the Odoo server (keeps the database running)
-make restart-all                         Restart the entire stack (Odoo + database)
-make logs                                Stream Odoo server logs
-make shell [script=path/to/script.py]    Open an Odoo ORM shell, or run a script non-interactively
-make psql [db=other_name]                Open a psql shell (default: active database)
-make extract src=<path> [dest=.]         Extract a file from the db container to the host
-make ps                                  Show container status
-make build                               Build the Docker image for ODOO_VERSION
-make reset                               Reset the database: drop, recreate, and install base module
-make restore dump=<file> [db=<name>]     Restore a database from ~/Odoo/Dumps/ (.zip, .dump, or .sql)
-make update modules=mod1,mod2            Update Odoo modules
-make test modules=mod1,mod2              Update modules and run Odoo test suite.
-make test-tags tags=/mod:Class.method    Run tests matching a tag, class or method
-make test-file file=/path/to/test.py     Run tests from a specific file
-make pgadmin                             Start pgAdmin4 at http://localhost:${PGADMIN_PORT:-5050}
-make list                                List all client environments and their running status
-make list-worktrees                      List available worktrees (active one highlighted)
-make worktree                            Open the interactive worktree manager
-make worktree-add VERSION=19.0           Add a worktree for the given version
-make worktree-remove VERSION=17.0        Remove a worktree for the given version
-make pull-all                            Update all worktrees to the latest commit on their origin branch
-make destroy                             Remove all containers, networks and volumes (deletes the database)
+make start                                          Start the environment
+make stop                                           Stop the environment (including pgAdmin if running)
+make restart                                        Restart the Odoo server (keeps the database running)
+make restart-all                                    Restart the entire stack (Odoo + database)
+make logs                                           Stream Odoo server logs
+make shell [script=path/to/script.py]               Open an Odoo ORM shell, or run a script non-interactively
+make psql [db=other_name]                           Open a psql shell (default: active database)
+make extract src=<path> [dest=.]                    Extract a file from the db container to the host
+make ps                                             Show container status
+make build                                          Build the Docker image for ODOO_VERSION
+make reset [demo=true]                              Reset the database: drop, recreate, and install base module
+make restore dump=<file> [db=<name>]                Restore a database from ~/Odoo/Dumps/ (.zip, .dump, or .sql)
+make update modules=mod1,mod2                       Update Odoo modules
+make test modules=mod1,mod2 [demo=true]             Update modules and run Odoo test suite.
+make test-tags tags=/mod:Class.method [demo=true]   Run tests matching a tag, class or method
+make test-file file=/path/to/test.py [demo=true]    Run tests from a specific file
+make pgadmin                                        Start pgAdmin4 at http://localhost:${PGADMIN_PORT:-5050}
+make list                                           List all client environments and their running status
+make list-worktrees                                 List available worktrees (active one highlighted)
+make worktree                                       Open the interactive worktree manager
+make worktree-add VERSION=19.0                      Add a worktree for the given version
+make worktree-remove VERSION=17.0                   Remove a worktree for the given version
+make pull-all                                       Update all worktrees to the latest commit on their origin branch
+make destroy                                        Remove all containers, networks and volumes (deletes the database)
 ```
 
 ---
@@ -181,11 +181,18 @@ Three commands are available depending on the level of granularity needed:
 | `make test-tags` | `--test-tags` (self-enabling) | Target a specific tag, class or method  |
 | `make test-file` | `--test-file`                 | Run all tests in a specific Python file |
 
+All three commands accept an optional `demo=true` parameter to load demo data
+during the test run. By default demo data is disabled (consistent across Odoo
+17, 18, and 19 — see note below).
+
 **Examples**
 
 ```bash
 # Upgrade and run all tests for a module
 make test modules=acme_sale
+
+# Same, but with demo data loaded
+make test modules=acme_sale demo=true
 
 # Run a specific test class
 make test-tags tags=/acme_sale:TestSaleOrder
@@ -198,6 +205,12 @@ make test-file file=/mnt/extra-addons/acme_sale/tests/test_sale_order.py
 ```
 
 > `--test-file` is available from Odoo 15 onwards.
+
+> **Demo data and Odoo versions**: Odoo 17 and 18 load demo data by default;
+> Odoo 19 changed the default to off. The `demo=true` parameter abstracts this
+> difference — it passes `--with-demo` on Odoo 19 and omits the flag on 17/18
+> where demo is already the default. Omitting `demo=true` always results in no
+> demo data regardless of version.
 
 ---
 
@@ -361,6 +374,14 @@ make restart-all
 Use `make reset` to reset the database. This drops any existing database,
 creates a new one, and installs the `base` module with `--stop-after-init`.
 Run `make start` afterwards to launch Odoo normally.
+
+```bash
+# Reset without demo data (default)
+make reset
+
+# Reset with demo data
+make reset demo=true
+```
 
 Use `make restore dump=backup.zip` to restore from an existing dump instead.
 Do not put `-i base` in `ODOO_EXTRA_ARGS` — it would reinstall the base module
