@@ -49,8 +49,8 @@ make destroy                                        Remove all containers, netwo
 
 ## Initial setup
 
-Run `setup.sh` once per machine to create the directory structure, clone the vault
-repositories, and create the initial worktrees.
+Run `setup.sh` once per machine to create the directory structure, shallow-clone
+repositories (`--depth 1`), and set up upgrade tools.
 
 ```bash
 ./setup.sh
@@ -58,49 +58,26 @@ repositories, and create the initial worktrees.
 
 The script is safe to re-run — existing directories and repos are skipped.
 
-### Using local donors to speed up vault cloning
+### Shallow clones (`--depth 1`)
 
-Cloning bare repos from GitHub can take a long time (~13 GB for `odoo` alone).
-If you already have a regular clone of a repo on your machine, you can use it as
-a **donor** — `setup.sh` will create the bare repo locally using hardlinks (instant,
-no network) and then only fetch the delta from GitHub.
+Instead of downloading the entire 20+ year git history (~25 GB) into a bare vault,
+`setup.sh` performs shallow clones with `--depth 1` for the specific versions you select.
+This drops the initial footprint from >25 GB to **~400–600 MB per version** and downloads
+in seconds.
 
-When the script reaches the vault cloning step, answer `y` to the donor prompt and
-provide the path to each existing clone. Leave a field empty to download that repo
-from GitHub normally.
-
-**What happens under the hood:**
-
-```bash
-# 1. Clone bare from donor using hardlinks (instant)
-git clone --bare --local ~/odoo-donor ~/Odoo/.vault/odoo.git
-
-# 2. Point the remote to GitHub
-git -C ~/Odoo/.vault/odoo.git remote set-url origin git@github.com:odoo/odoo.git
-
-# 3. Set the correct bare-repo fetch refspec
-git -C ~/Odoo/.vault/odoo.git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-
-# 4. Fetch only what's missing
-git -C ~/Odoo/.vault/odoo.git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
-```
-
-> **Disk space:** The donor approach has the same final footprint as a direct
-> `--bare` clone from GitHub. Donors can be safely deleted once `setup.sh` finishes —
-> the script will offer to do this automatically.
-
-> **Common mistake:** Do not configure the fetch refspec as
-> `+refs/heads/*:refs/heads/*`. When a branch is checked out in a worktree (e.g.
-> `18.0`), Git refuses to fetch into it — even when you are creating a completely
-> different version. Always use `refs/remotes/origin/*` as the destination so fetched
-> refs never conflict with checked-out worktrees.
+Each version contains:
+- `odoo/` (`--depth 1`)
+- `enterprise/` (`--depth 1`)
+- `design-themes/` (`--depth 1`)
+- `Dockerfile` (legacy or modern based on version)
+- `.dockerignore` (optimizes `make build` context transfer)
 
 ---
 
-## Managing worktrees
+## Managing worktrees / versions
 
 Use `make worktree-add` / `make worktree-remove` to add or remove Odoo source
-worktrees after the initial setup. This is the recommended way to add new versions —
+versions after the initial setup. This is the recommended way to add new versions —
 including `saas-*` branches — without re-running `setup.sh`.
 
 ```bash
@@ -110,16 +87,10 @@ make worktree-remove VERSION=17.0
 make worktree                        # interactive menu
 ```
 
-The script fetches the latest refs from the vault before creating a worktree, copies
+The script clones the version branches directly from GitHub with `--depth 1`, copies
 the appropriate Dockerfile based on the major version number (`legacy` / Python 3.10
 for < 18.0, including `saas-16.*` and `saas-17.*`; `modern` / Python 3.12 for ≥ 18.0
-and `saas-18.*` and above), and registers the worktree removal cleanly with git when
-deleting.
-
-> **Important:** The `.vault/` directory must always be located at `~/Odoo/.vault`.
-> This path is mounted into the container at its exact host location so that git worktree
-> pointers resolve correctly inside the container — required for GitLens to show
-> blame and history on Odoo source files.
+and `saas-18.*` and above), and configures `.dockerignore`.
 
 ---
 

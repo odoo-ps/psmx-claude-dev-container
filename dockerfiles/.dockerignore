@@ -1,0 +1,6 @@
+**/.git
+enterprise/
+design-themes/
+odoo/*
+!odoo/requirements.txt
+

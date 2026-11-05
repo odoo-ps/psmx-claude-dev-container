@@ -4,8 +4,8 @@ set -euo pipefail
 # =============================================================================
 # Odoo Dev Environment — Pull All
 # =============================================================================
-# Fetch latest commits from origin for all vault repos, then fast-forward
-# all worktrees to their respective remote branches.
+# For each shallow-cloned repo (--depth 1), fetch the latest commit of its
+# respective version branch and update HEAD to FETCH_HEAD.
 #
 # Usage:
 #   make pull-all
@@ -13,34 +13,17 @@ set -euo pipefail
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VAULT_DIR="${ODOO_VAULT_PATH:-$HOME/Odoo/.vault}"
 WORKTREES_DIR="${ODOO_WORKTREE_PATH:-$HOME/Odoo/Worktrees}"
 REPOS=(odoo enterprise design-themes)
 
 source "$SCRIPT_DIR/lib/helpers.sh"
 
-# --- Fetch -------------------------------------------------------------------
-print_section "Fetching from origin"
-echo ""
-
-for repo in "${REPOS[@]}"; do
-    if run_with_spinner "Fetching $repo..." \
-        git -C "$VAULT_DIR/${repo}.git" fetch --prune origin \
-            '+refs/heads/*:refs/remotes/origin/*'; then
-        print_ok "$repo"
-    else
-        print_error "$repo — fetch failed. Check SSH access to GitHub."
-        exit 1
-    fi
-done
-
-# --- Update worktrees --------------------------------------------------------
-echo ""
-print_section "Updating worktrees"
+# --- Update repositories -----------------------------------------------------
+print_section "Updating repositories (--depth 1)"
 echo ""
 
 if [ ! -d "$WORKTREES_DIR" ]; then
-    print_info "No worktrees found in $WORKTREES_DIR"
+    print_info "No repositories found in $WORKTREES_DIR"
     echo ""
     exit 0
 fi
@@ -54,13 +37,17 @@ for version_dir in "$WORKTREES_DIR"/*/; do
     for repo in "${REPOS[@]}"; do
         dest="$WORKTREES_DIR/$version/$repo"
         [ -d "$dest" ] || continue
-        if git -C "$dest" reset --hard "origin/$version" > /dev/null 2>&1; then
+        if run_with_spinner "Updating $repo ($version)..." bash -c "
+            git -C '$dest' fetch --depth 1 origin '$version' && \
+            git -C '$dest' reset --hard FETCH_HEAD && \
+            git -C '$dest' clean -fd
+        "; then
             print_ok "$repo"
         else
-            print_error "$repo (failed — check if origin/$version exists)"
+            print_error "$repo (update failed — check if branch $version exists and SSH access)"
         fi
     done
     echo ""
 done
 
-[ "$found" = "1" ] || { print_info "No worktrees found."; echo ""; }
+[ "$found" = "1" ] || { print_info "No repositories found."; echo ""; }

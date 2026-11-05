@@ -27,8 +27,8 @@ Go to Settings → Resources and apply:
 ## First-time machine setup
 
 Run `setup.sh` once on a new machine. It creates the `~/Odoo/` directory structure,
-clones Odoo source repos as bare repositories, creates worktrees for the versions
-you choose, and installs upgrade tools.
+shallow-clones Odoo source repos (`--depth 1`) for the versions you choose,
+and installs upgrade tools.
 
 ```bash
 git clone git@github.com:odoo-ps/psmx-claude-dev-container.git

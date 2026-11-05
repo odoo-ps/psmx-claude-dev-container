@@ -60,3 +60,21 @@ is_legacy() {
     fi
     [[ "$major" -lt 18 ]]
 }
+
+# --- Repositories ------------------------------------------------------------
+ODOO_REPO="git@github.com:odoo/odoo.git"
+ENTERPRISE_REPO="git@github.com:odoo/enterprise.git"
+DESIGN_THEMES_REPO="git@github.com:odoo/design-themes.git"
+UPGRADE_REPO="git@github.com:odoo/upgrade.git"
+UPGRADE_UTIL_REPO="git@github.com:odoo/upgrade-util.git"
+
+get_repo_url() {
+    case "$1" in
+        odoo)          echo "$ODOO_REPO" ;;
+        enterprise)    echo "$ENTERPRISE_REPO" ;;
+        design-themes) echo "$DESIGN_THEMES_REPO" ;;
+        upgrade)       echo "$UPGRADE_REPO" ;;
+        upgrade-util)  echo "$UPGRADE_UTIL_REPO" ;;
+        *) return 1 ;;
+    esac
+}

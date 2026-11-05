@@ -4,9 +4,8 @@ set -euo pipefail
 # =============================================================================
 # Odoo Dev Environment — Initial Machine Setup
 # =============================================================================
-# This script sets up the ~/Odoo/ directory structure, clones Odoo source
-# repos as bare repositories, creates worktrees for selected versions,
-# and installs upgrade tools.
+# This script sets up the ~/Odoo/ directory structure, shallow-clones Odoo
+# source repos (--depth 1) for selected versions, and installs upgrade tools.
 #
 # Usage: bash setup.sh
 # Safe to re-run: existing directories and repos are skipped.
@@ -15,7 +14,6 @@ set -euo pipefail
 # --- Paths -------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ODOO_BASE=~/Odoo
-VAULT_DIR="$ODOO_BASE/.vault"
 DATA_DIR="$ODOO_BASE/.data"
 WORKTREES_DIR="$ODOO_BASE/Worktrees"
 CUSTOMERS_DIR="$ODOO_BASE/Customers"
@@ -26,13 +24,6 @@ DOCKERFILES_DIR="$SCRIPT_DIR/dockerfiles"
 
 # --- Helpers -----------------------------------------------------------------
 source "$SCRIPT_DIR/lib/helpers.sh"
-
-# --- Repos -------------------------------------------------------------------
-ODOO_REPO="git@github.com:odoo/odoo.git"
-ENTERPRISE_REPO="git@github.com:odoo/enterprise.git"
-DESIGN_THEMES_REPO="git@github.com:odoo/design-themes.git"
-UPGRADE_REPO="git@github.com:odoo/upgrade.git"
-UPGRADE_UTIL_REPO="git@github.com:odoo/upgrade-util.git"
 
 # --- Versions ----------------------------------------------------------------
 LEGACY_VERSIONS=("16.0" "17.0")
@@ -87,7 +78,6 @@ create_directories() {
   print_section "Creating directory structure"
 
   local dirs=(
-    "$VAULT_DIR"
     "$DATA_DIR"
     "$WORKTREES_DIR"
     "$CUSTOMERS_DIR"
@@ -106,102 +96,7 @@ create_directories() {
   done
 }
 
-# --- 3. Bare repos -----------------------------------------------------------
-USED_DONORS=()
-
-expand_path() {
-  local path="$1"
-  echo "${path/#\~/$HOME}"
-}
-
-clone_vault() {
-  print_section "Cloning bare repositories into .vault/"
-  echo ""
-  print_info "If you already have local clones of these repos, you can use them"
-  print_info "as donors to avoid downloading from GitHub (saves time, same final size)."
-  print_info "Donors can be deleted after setup completes."
-  echo ""
-  read -rp "  Do you have local clones to use as donors? [y/N]: " use_donors
-  echo ""
-
-  local donor_odoo="" donor_enterprise="" donor_themes=""
-
-  if [[ "$use_donors" =~ ^[Yy]$ ]]; then
-    read -rp "  Path to odoo clone          (Enter to download from GitHub): " donor_odoo
-    read -rp "  Path to enterprise clone    (Enter to download from GitHub): " donor_enterprise
-    read -rp "  Path to design-themes clone (Enter to download from GitHub): " donor_themes
-    echo ""
-    donor_odoo=$(expand_path "$donor_odoo")
-    donor_enterprise=$(expand_path "$donor_enterprise")
-    donor_themes=$(expand_path "$donor_themes")
-  fi
-
-  clone_bare() {
-    local name="$1"
-    local url="$2"
-    local donor="$3"
-    local dest="$VAULT_DIR/${name}.git"
-
-    if [ -d "$dest" ]; then
-      print_skip ".vault/${name}.git"
-      return
-    fi
-
-    if [ -n "$donor" ] && [ -d "$donor" ]; then
-      echo -e "  Cloning ${BOLD}${name}${NC} from local donor..."
-      git clone --bare --local "$donor" "$dest"
-      git -C "$dest" remote set-url origin "$url"
-      git -C "$dest" config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-      run_with_spinner "Fetching updates for ${name} from GitHub..." \
-        git -C "$dest" fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune ||
-        {
-          print_error "fetch failed for ${name} — check your SSH access to GitHub"
-          exit 1
-        }
-      print_ok ".vault/${name}.git (from donor)"
-      USED_DONORS+=("$donor")
-    else
-      if [ -n "$donor" ]; then
-        print_error "Donor path not found: $donor — downloading from GitHub instead"
-      fi
-      echo -e "  Cloning ${BOLD}${name}${NC} from GitHub..."
-      git clone --bare "$url" "$dest"
-      git -C "$dest" config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-      git -C "$dest" fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
-      print_ok ".vault/${name}.git"
-    fi
-  }
-
-  clone_bare "odoo" "$ODOO_REPO" "$donor_odoo"
-  clone_bare "enterprise" "$ENTERPRISE_REPO" "$donor_enterprise"
-  clone_bare "design-themes" "$DESIGN_THEMES_REPO" "$donor_themes"
-}
-
-# --- 3b. Donor cleanup -------------------------------------------------------
-cleanup_donors() {
-  [ ${#USED_DONORS[@]} -eq 0 ] && return
-
-  echo ""
-  print_section "Donor cleanup"
-  print_info "The following donor repos are no longer needed:"
-  for donor in "${USED_DONORS[@]}"; do
-    echo -e "    ${YELLOW}${donor}${NC}"
-  done
-  echo ""
-  read -rp "  Delete them now to free up disk space? [y/N]: " do_cleanup
-  echo ""
-
-  if [[ "$do_cleanup" =~ ^[Yy]$ ]]; then
-    for donor in "${USED_DONORS[@]}"; do
-      rm -rf "$donor"
-      print_ok "Deleted $donor"
-    done
-  else
-    print_info "Kept — you can delete them manually when ready"
-  fi
-}
-
-# --- 4. Version selection ----------------------------------------------------
+# --- 3. Version selection ----------------------------------------------------
 select_versions() {
   print_section "Select versions to install"
   echo ""
@@ -246,9 +141,9 @@ select_versions() {
   echo -e "  Installing: ${BOLD}${SELECTED_VERSIONS[*]}${NC}"
 }
 
-# --- 5. Worktrees ------------------------------------------------------------
+# --- 4. Worktrees / Repositories ---------------------------------------------
 create_worktrees() {
-  print_section "Creating worktrees"
+  print_section "Cloning repositories (--depth 1)"
 
   for version in "${SELECTED_VERSIONS[@]}"; do
     echo ""
@@ -256,10 +151,14 @@ create_worktrees() {
 
     for repo in odoo enterprise design-themes; do
       local dest="$WORKTREES_DIR/$version/$repo"
+      local repo_url
+      repo_url="$(get_repo_url "$repo")"
+
       if [ -d "$dest" ]; then
         print_skip "  Worktrees/$version/$repo"
       else
-        git -C "$VAULT_DIR/${repo}.git" worktree add "$dest" "origin/$version"
+        echo -e "  Cloning ${BOLD}${repo}${NC} ($version)..."
+        git clone --depth 1 --branch "$version" "$repo_url" "$dest"
         print_ok "  Worktrees/$version/$repo"
       fi
     done
@@ -275,18 +174,26 @@ create_worktrees() {
       fi
       print_ok "  Worktrees/$version/Dockerfile"
     fi
+
+    local dockerignore_dest="$WORKTREES_DIR/$version/.dockerignore"
+    if [ -f "$dockerignore_dest" ]; then
+      print_skip "  Worktrees/$version/.dockerignore"
+    elif [ -f "$DOCKERFILES_DIR/.dockerignore" ]; then
+      cp "$DOCKERFILES_DIR/.dockerignore" "$dockerignore_dest"
+      print_ok "  Worktrees/$version/.dockerignore"
+    fi
   done
 }
 
-# --- 6. Upgrade tools --------------------------------------------------------
+# --- 5. Upgrade tools --------------------------------------------------------
 setup_upgrade_tools() {
-  print_section "Cloning upgrade tools"
+  print_section "Cloning upgrade tools (--depth 1)"
 
   if [ -d "$UPGRADE_DIR/upgrade" ]; then
     print_skip "Upgrade/upgrade"
   else
     echo -e "  Cloning ${BOLD}upgrade${NC}..."
-    git clone "$UPGRADE_REPO" "$UPGRADE_DIR/upgrade"
+    git clone --depth 1 "$UPGRADE_REPO" "$UPGRADE_DIR/upgrade"
     print_ok "Upgrade/upgrade"
   fi
 
@@ -294,18 +201,18 @@ setup_upgrade_tools() {
     print_skip "Upgrade/upgrade-util"
   else
     echo -e "  Cloning ${BOLD}upgrade-util${NC}..."
-    git clone "$UPGRADE_UTIL_REPO" "$UPGRADE_DIR/upgrade-util"
+    git clone --depth 1 "$UPGRADE_UTIL_REPO" "$UPGRADE_DIR/upgrade-util"
     print_ok "Upgrade/upgrade-util"
   fi
 }
 
-# --- 7. Docker images --------------------------------------------------------
+# --- 6. Docker images --------------------------------------------------------
 # Docker images are built per-client via 'make build' from the client folder.
 # Building here would be context-dependent and could cause 'check-image' to
 # fail if the Docker context changes between setup and 'make start'.
 # See WORKFLOWS.md section 6 for details.
 
-# --- 8. Summary --------------------------------------------------------------
+# --- 7. Summary --------------------------------------------------------------
 print_summary() {
   echo ""
   echo -e "${BOLD}${GREEN}============================================${NC}"
@@ -336,11 +243,9 @@ main() {
   print_header
   check_prerequisites
   create_directories
-  clone_vault
   select_versions
   create_worktrees
   setup_upgrade_tools
-  cleanup_donors
   print_summary
 }
 

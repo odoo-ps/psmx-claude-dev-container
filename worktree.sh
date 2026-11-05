@@ -18,7 +18,6 @@ set -euo pipefail
 # --- Paths -------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ODOO_BASE=~/Odoo
-VAULT_DIR="$ODOO_BASE/.vault"
 WORKTREES_DIR="$ODOO_BASE/Worktrees"
 DOCKERFILES_DIR="$SCRIPT_DIR/dockerfiles"
 
@@ -44,16 +43,6 @@ validate_version() {
     fi
 }
 
-check_vault() {
-    for repo in "${REPOS[@]}"; do
-        if [[ ! -d "$VAULT_DIR/${repo}.git" ]]; then
-            print_error "Vault not found: $VAULT_DIR/${repo}.git"
-            print_info  "Run setup.sh first to clone the bare repositories."
-            exit 1
-        fi
-    done
-}
-
 check_connectivity() {
     nc -z -w 5 github.com 22 2>/dev/null
 }
@@ -70,38 +59,27 @@ cmd_add() {
     fi
 
     validate_version "$version"
-    check_vault
 
-    # Fetch latest refs
-    echo -e "  Fetching latest refs from origin..."
-    echo ""
-    if check_connectivity; then
-        for repo in "${REPOS[@]}"; do
-            echo -e "  ${BOLD}${repo}${NC}"
-            git -C "$VAULT_DIR/${repo}.git" fetch --prune origin \
-                '+refs/heads/*:refs/remotes/origin/*' \
-                && print_ok "fetched" \
-                || { print_error "fetch failed — check your SSH access to GitHub"; exit 1; }
-        done
-    else
+    if ! check_connectivity; then
         print_error "Cannot reach GitHub (github.com:22 unreachable)"
-        print_info  "The worktree will be created from the current vault state."
-        echo ""
-        read -rp "  Continue without fetching? [y/N]: " offline_confirm
-        echo ""
-        [[ "$offline_confirm" =~ ^[Yy]$ ]] || { print_info "Aborted."; exit 0; }
+        print_error "SSH access to GitHub is required to shallow-clone the repositories."
+        exit 1
     fi
 
-    # Create worktrees
+    # Clone repos shallowly
     echo ""
-    echo -e "  ${BOLD}Creating worktrees for $version${NC}"
+    echo -e "  ${BOLD}Cloning repositories for $version (--depth 1)${NC}"
     echo ""
     for repo in "${REPOS[@]}"; do
         local dest="$WORKTREES_DIR/$version/$repo"
+        local repo_url
+        repo_url="$(get_repo_url "$repo")"
+
         if [[ -d "$dest" ]]; then
             print_skip "Worktrees/$version/$repo"
         else
-            git -C "$VAULT_DIR/${repo}.git" worktree add "$dest" "origin/$version"
+            echo -e "  Cloning ${BOLD}${repo}${NC} ($version)..."
+            git clone --depth 1 --branch "$version" "$repo_url" "$dest"
             print_ok "Worktrees/$version/$repo"
         fi
     done
@@ -119,6 +97,15 @@ cmd_add() {
             cp "$DOCKERFILES_DIR/modern.Dockerfile" "$dockerfile_dest"
             print_ok "Worktrees/$version/Dockerfile  ${GREEN}(modern — Python 3.12)${NC}"
         fi
+    fi
+
+    # Copy .dockerignore for optimized build context
+    local dockerignore_dest="$WORKTREES_DIR/$version/.dockerignore"
+    if [[ -f "$dockerignore_dest" ]]; then
+        print_skip "Worktrees/$version/.dockerignore"
+    elif [[ -f "$DOCKERFILES_DIR/.dockerignore" ]]; then
+        cp "$DOCKERFILES_DIR/.dockerignore" "$dockerignore_dest"
+        print_ok "Worktrees/$version/.dockerignore"
     fi
 
     echo ""
@@ -170,7 +157,7 @@ cmd_remove() {
     fi
 
     # Confirm
-    echo -e "  ${YELLOW}This will permanently remove Worktrees/${version} and its git worktree registrations.${NC}"
+    echo -e "  ${YELLOW}This will permanently remove Worktrees/${version}.${NC}"
     echo ""
     read -rp "  Are you sure? [y/N]: " confirm
     echo ""
@@ -179,20 +166,12 @@ cmd_remove() {
         exit 0
     fi
 
-    check_vault
-
-    # Remove git worktrees
-    echo -e "  ${BOLD}Removing worktrees for $version${NC}"
+    # Remove repositories
+    echo -e "  ${BOLD}Removing repositories for $version${NC}"
     echo ""
     for repo in "${REPOS[@]}"; do
         local dest="$WORKTREES_DIR/$version/$repo"
         if [[ -d "$dest" ]]; then
-            # Deregister from git — ignore errors (may already be deregistered
-            # if a previous run failed mid-way). --force bypasses dirty-file
-            # protection but does NOT handle untracked files, so we always
-            # fall back to rm -rf below.
-            git -C "$VAULT_DIR/${repo}.git" worktree remove --force "$dest" 2>/dev/null || true
-            git -C "$VAULT_DIR/${repo}.git" worktree prune
             rm -rf "$dest"
             print_ok "removed Worktrees/$version/$repo"
         else
@@ -200,7 +179,7 @@ cmd_remove() {
         fi
     done
 
-    # Remove remaining files (Dockerfile, etc.)
+    # Remove remaining files (Dockerfile, .dockerignore, etc.)
     local version_dir="$WORKTREES_DIR/$version"
     if [[ -d "$version_dir" ]]; then
         rm -rf "$version_dir"

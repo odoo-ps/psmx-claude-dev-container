@@ -3,7 +3,6 @@ export
 
 ODOO_MODE          ?= development
 CUSTOMERS_PATH     ?= $(HOME)/Odoo/Customers
-ODOO_VAULT_PATH    ?= $(HOME)/Odoo/.vault
 ODOO_WORKTREE_PATH ?= $(HOME)/Odoo/Worktrees
 ODOO_UPGRADE_PATH  ?= $(HOME)/Odoo/Upgrade
 DUMPS_PATH         ?= $(HOME)/Odoo/Dumps
@@ -335,7 +334,7 @@ worktree-remove: ## Remove a worktree — usage: make worktree-remove VERSION=17
 	@bash worktree.sh remove $(VERSION)
 
 
-pull-all: ## Update all worktrees to the latest commit on their origin branch
+pull-all: ## Update all version repositories to the latest commit on their branch
 	@bash pull-all.sh
 
 build: check-env ## Build the Docker image for the active version
